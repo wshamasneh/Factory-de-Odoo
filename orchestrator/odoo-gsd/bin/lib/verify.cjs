@@ -356,8 +356,14 @@ function cmdVerifyKeyLinks(cwd, planFilePath, raw) {
       check.detail = 'Source file not found';
     } else if (link.pattern) {
       try {
+        if (link.pattern.length > 500) {
+          check.detail = 'Pattern too long (max 500 chars)';
+          results.push(check);
+          continue;
+        }
         const regex = new RegExp(link.pattern);
-        if (regex.test(sourceContent)) {
+        const testContent = sourceContent.slice(0, 100000);
+        if (regex.test(testContent)) {
           check.verified = true;
           check.detail = 'Pattern found in source';
         } else {

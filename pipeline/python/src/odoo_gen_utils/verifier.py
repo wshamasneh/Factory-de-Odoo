@@ -322,9 +322,14 @@ def build_verifier_from_env() -> EnvironmentVerifier:
     config = OdooConfig(
         url=url,
         db=os.environ.get("ODOO_DB", "odoo_dev"),
-        username=os.environ.get("ODOO_USER", "admin"),
-        api_key=os.environ.get("ODOO_API_KEY", "admin"),
+        username=os.environ.get("ODOO_USER", ""),
+        api_key=os.environ.get("ODOO_API_KEY", ""),
     )
+    if not config.username or not config.api_key:
+        logger.warning(
+            "ODOO_USER and ODOO_API_KEY not set; environment verification disabled."
+        )
+        return EnvironmentVerifier(client=None)
     try:
         client = OdooClient(config)
         return EnvironmentVerifier(client=client)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import logging
 import re
 from typing import Any
@@ -11,6 +12,45 @@ from odoo_gen_utils.utils.copy import deep_copy_model, merge_override_source
 from odoo_gen_utils.utils.validate import validate_identifier, validate_message
 
 logger = logging.getLogger(__name__)
+
+# Dangerous AST node types that should never appear in generated constraint code
+_DANGEROUS_NODES = (ast.Import, ast.ImportFrom)
+# Dangerous function names
+_DANGEROUS_CALLS = frozenset({
+    "exec", "eval", "compile", "__import__", "globals", "locals",
+    "getattr", "setattr", "delattr", "breakpoint",
+})
+# Dangerous attribute access patterns
+_DANGEROUS_ATTRS = frozenset({
+    "system", "popen", "run", "call", "check_output", "check_call",
+    "Popen",
+})
+
+
+def _validate_generated_code(code: str) -> bool:
+    """Validate that generated Python code does not contain dangerous constructs.
+
+    Parses the code as an AST and walks it to reject import statements,
+    exec/eval calls, subprocess usage, and os.system calls.
+
+    Returns True if the code is safe, False if dangerous constructs are found.
+    """
+    if not code or not code.strip():
+        return True
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return False
+    for node in ast.walk(tree):
+        if isinstance(node, _DANGEROUS_NODES):
+            return False
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name) and func.id in _DANGEROUS_CALLS:
+                return False
+            if isinstance(func, ast.Attribute) and func.attr in _DANGEROUS_ATTRS:
+                return False
+    return True
 
 
 @register_preprocessor(order=30, name="constraints")
@@ -134,7 +174,17 @@ def _process_constraints(spec: dict[str, Any]) -> dict[str, Any]:
             new_models.append(model)
             continue
 
-        enriched_constraints = [_enrich_constraint(c) for c in mc]
+        enriched_constraints = []
+        for c in mc:
+            enriched = _enrich_constraint(c)
+            code_to_validate = enriched.get("check_expr") or enriched.get("check_body", "")
+            if code_to_validate and not _validate_generated_code(code_to_validate):
+                logger.warning(
+                    "Constraint '%s' contains dangerous code constructs — skipping.",
+                    c.get("name", "unknown"),
+                )
+                continue
+            enriched_constraints.append(enriched)
 
         # DEBT-09: Compute override constraints once with applies_to field,
         # instead of two identical lists. Keep backward-compatible keys.

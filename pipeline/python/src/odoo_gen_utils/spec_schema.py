@@ -15,7 +15,10 @@ Usage::
 
 from __future__ import annotations
 
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
@@ -597,7 +600,7 @@ def validate_spec(raw_spec: dict[str, Any]) -> ModuleSpec:
     except ValidationError as exc:
         module_name = raw_spec.get("module_name", "unknown")
         formatted = format_validation_errors(exc, module_name)
-        print(formatted)
+        logger.error(formatted)
         raise
 
 

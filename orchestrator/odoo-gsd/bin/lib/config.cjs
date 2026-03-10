@@ -182,15 +182,15 @@ function cmdConfigSet(cwd, keyPath, value, raw) {
 
   // Set nested value using dot notation (e.g., "workflow.research")
   const keys = keyPath.split('.');
-  let current = config;
-  for (let i = 0; i < keys.length - 1; i++) {
-    const key = keys[i];
-    if (current[key] === undefined || typeof current[key] !== 'object') {
-      current[key] = {};
+  function deepSet(obj, keyArr, value) {
+    if (keyArr.length === 1) {
+      return { ...obj, [keyArr[0]]: value };
     }
-    current = current[key];
+    const [head, ...rest] = keyArr;
+    const child = (obj[head] !== undefined && typeof obj[head] === 'object') ? obj[head] : {};
+    return { ...obj, [head]: deepSet(child, rest, value) };
   }
-  current[keys[keys.length - 1]] = parsedValue;
+  config = deepSet(config, keys, parsedValue);
 
   // Write back
   try {

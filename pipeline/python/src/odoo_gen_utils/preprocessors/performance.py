@@ -14,6 +14,39 @@ logger = logging.getLogger(__name__)
 
 _SAFE_IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
+# SQL keywords that are NEVER allowed in WHERE clauses for composite indexes
+_DANGEROUS_SQL_KEYWORDS = re.compile(
+    r"\b(DROP|DELETE|INSERT|UPDATE|ALTER|CREATE|TRUNCATE|EXEC|EXECUTE|"
+    r"UNION|INTO|GRANT|REVOKE|COPY|pg_)\b",
+    re.IGNORECASE,
+)
+# Only allow simple predicates: identifiers, operators, literals, AND/OR/NOT
+_SAFE_WHERE_CHARS = re.compile(r"^[a-zA-Z0-9_\s=!<>().',\-]+$")
+
+
+def _validate_where_clause(where_clause: str | None) -> bool:
+    """Validate a WHERE clause contains only safe SQL predicates.
+
+    Rejects clauses containing dangerous SQL keywords (DROP, DELETE, UNION, etc.)
+    or suspicious characters (semicolons, double-dashes).
+    """
+    if not where_clause:
+        return True
+    if not isinstance(where_clause, str):
+        return False
+    clause = where_clause.strip()
+    if not clause:
+        return True
+    if _DANGEROUS_SQL_KEYWORDS.search(clause):
+        return False
+    if ";" in clause:
+        return False
+    if "--" in clause:
+        return False
+    if not _SAFE_WHERE_CHARS.match(clause):
+        return False
+    return True
+
 
 @register_preprocessor(order=40, name="performance")
 def _process_performance(spec: dict[str, Any]) -> dict[str, Any]:
@@ -181,6 +214,13 @@ def _enrich_model_performance(model: dict[str, Any]) -> dict[str, Any]:
                 logger.warning(
                     "index_hint on model '%s' has non-string where clause — skipping.",
                     model.get("name", "?"),
+                )
+                continue
+            if not _validate_where_clause(where_clause):
+                logger.warning(
+                    "index_hint on model '%s' has unsafe where clause %r — skipping.",
+                    model.get("name", "?"),
+                    where_clause,
                 )
                 continue
             composite_indexes.append({

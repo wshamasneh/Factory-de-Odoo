@@ -150,11 +150,7 @@ def _teardown(compose_file: Path, env: dict[str, str]) -> None:
                     max_attempts,
                     exc_info=True,
                 )
-                print(
-                    f"ERROR: Docker teardown failed after {max_attempts} attempts. "
-                    f"Run 'docker compose -f {compose_file} down -v' manually.",
-                    file=sys.stderr,
-                )
+                # logger.error above already logs; avoid redundant print
 
 
 def _start_db_with_retry(

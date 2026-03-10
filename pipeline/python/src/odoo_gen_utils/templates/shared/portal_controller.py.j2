@@ -150,7 +150,10 @@ class {{ controller_class }}(CustomerPortal):
             allowed_fields = {{ '{' }}{% for f in page.fields_editable %}'{{ f }}'{% if not loop.last %}, {% endif %}{% endfor %}{{ '}' }}
             vals = {k: v for k, v in post.items() if k in allowed_fields}
             # --- BUSINESS LOGIC START ---
-            # TODO: validate and write editable fields
+            # SECURITY: Validate field values before writing.
+            # .sudo() bypasses access rules -- ensure the portal user
+            # is authorized to modify this specific record.
+            # TODO: Add type coercion and domain-specific validation for each field.
             # --- BUSINESS LOGIC END ---
             {{ page.singular_name }}.sudo().write(vals)
             return request.redirect('{{ page.route }}')

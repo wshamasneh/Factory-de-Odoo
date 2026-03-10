@@ -535,18 +535,20 @@ def _render_document_type_xml(
         "<odoo>",
         '    <data noupdate="1">',
     ]
+    from markupsafe import escape as xml_escape
+
     for dt in doc_types:
-        code = dt.get("code", "")
+        code = xml_escape(dt.get("code", ""))
         xml_id = f"{module_name}.document_type_{code}"
         lines.append(f'        <record id="{xml_id}" model="document.type">')
-        lines.append(f'            <field name="name">{dt.get("name", "")}</field>')
+        lines.append(f'            <field name="name">{xml_escape(dt.get("name", ""))}</field>')
         lines.append(f'            <field name="code">{code}</field>')
         if "required_for" in dt:
-            lines.append(f'            <field name="required_for">{dt["required_for"]}</field>')
+            lines.append(f'            <field name="required_for">{xml_escape(str(dt["required_for"]))}</field>')
         if "max_file_size" in dt:
-            lines.append(f'            <field name="max_file_size" eval="{dt["max_file_size"]}"/>')
+            lines.append(f'            <field name="max_file_size" eval="{xml_escape(str(dt["max_file_size"]))}"/>')
         if "allowed_mime_types" in dt:
-            lines.append(f'            <field name="allowed_mime_types">{dt["allowed_mime_types"]}</field>')
+            lines.append(f'            <field name="allowed_mime_types">{xml_escape(str(dt["allowed_mime_types"]))}</field>')
         lines.append("        </record>")
     lines.append("    </data>")
     lines.append("</odoo>")
@@ -834,7 +836,7 @@ def render_controllers(
             ) + "\n"
             init_path = module_dir / "wizards" / "__init__.py"
             init_path.parent.mkdir(parents=True, exist_ok=True)
-            init_path.write_text(init_content)
+            init_path.write_text(init_content, encoding="utf-8")
             created.append(init_path)
 
         return Result.ok(created)

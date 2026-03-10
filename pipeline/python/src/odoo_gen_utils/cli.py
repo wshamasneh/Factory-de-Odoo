@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from pathlib import Path
+
+_logger = logging.getLogger(__name__)
 
 import click
 
@@ -615,9 +618,9 @@ def render_module_cmd(spec_file: str, output_dir: str, no_context7: bool, fresh_
                         f"{docs_dir}/er_diagram.mmd"
                     )
                 except Exception:
-                    pass  # Mermaid generation is best-effort
+                    _logger.debug("Mermaid diagram generation failed", exc_info=True)
         except Exception:
-            pass  # Registry update is best-effort, don't fail render
+            _logger.debug("Registry update failed (non-blocking)", exc_info=True)
     except PydanticValidationError as exc:
         formatted = format_validation_errors(exc, spec.get("module_name", "unknown"))
         click.echo(formatted, err=True)

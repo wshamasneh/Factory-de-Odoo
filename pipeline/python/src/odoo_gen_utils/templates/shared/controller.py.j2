@@ -1,6 +1,10 @@
 {# controller.py.j2 -- HTTP controller with @http.route decorators #}
+import logging
+
 from odoo import http
 from odoo.http import request
+
+_logger = logging.getLogger(__name__)
 
 
 class {{ controller_class }}(http.Controller):
@@ -19,8 +23,9 @@ class {{ controller_class }}(http.Controller):
         try:
             # TODO: implement {{ route.method_name }} logic
             return {'status': 'ok', 'data': {}}
-        except Exception as e:
-            return {'status': 'error', 'message': str(e)}
+        except Exception:
+            _logger.exception("Controller error in %s", request.httprequest.path)
+            return {'status': 'error', 'message': 'An internal error occurred.'}
 {% else %}
         # TODO: implement {{ route.method_name }} logic
         return request.render('{{ module_name }}.template_name', {})

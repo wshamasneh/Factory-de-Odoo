@@ -40,8 +40,8 @@ function output(result, raw, rawValue) {
     // Large payloads exceed Claude Code's Bash tool buffer (~50KB).
     // Write to tmpfile and output the path prefixed with @file: so callers can detect it.
     if (json.length > 50000) {
-      const tmpPath = path.join(require('os').tmpdir(), `odoo-gsd-${Date.now()}.json`);
-      fs.writeFileSync(tmpPath, json, 'utf-8');
+      const tmpPath = path.join(require('os').tmpdir(), `odoo-gsd-${Date.now()}-${process.pid}.json`);
+      fs.writeFileSync(tmpPath, json, { encoding: 'utf-8', mode: 0o600 });
       process.stdout.write('@file:' + tmpPath);
     } else {
       process.stdout.write(json);
@@ -133,15 +133,8 @@ function loadConfig(cwd) {
 
 function isGitIgnored(cwd, targetPath) {
   try {
-    // --no-index checks .gitignore rules regardless of whether the file is tracked.
-    // Without it, git check-ignore returns "not ignored" for tracked files even when
-    // .gitignore explicitly lists them — a common source of confusion when .planning/
-    // was committed before being added to .gitignore.
-    execSync('git check-ignore -q --no-index -- ' + targetPath.replace(/[^a-zA-Z0-9._\-/]/g, ''), {
-      cwd,
-      stdio: 'pipe',
-    });
-    return true;
+    const result = execGit(cwd, ['check-ignore', '-q', '--no-index', '--', targetPath]);
+    return result.exitCode === 0;
   } catch {
     return false;
   }
@@ -468,6 +461,44 @@ function getMilestonePhaseFilter(cwd) {
   return isDirInMilestone;
 }
 
+/**
+ * Ensure a file path resolves within the given cwd directory.
+ * Prevents path traversal attacks (CWE-22).
+ */
+function ensureWithinCwd(cwd, filePath) {
+  const resolved = path.isAbsolute(filePath) ? filePath : path.join(cwd, filePath);
+  const normalizedCwd = path.resolve(cwd);
+  const normalizedTarget = path.resolve(resolved);
+  if (normalizedTarget !== normalizedCwd && !normalizedTarget.startsWith(normalizedCwd + path.sep)) {
+    throw new Error(`Path "${filePath}" is outside the project directory`);
+  }
+  return normalizedTarget;
+}
+
+/**
+ * Check if a directory contains source code files (replaces shell find pipeline).
+ * Searches up to 3 levels deep, ignoring node_modules and .git.
+ */
+function hasSourceFiles(dir) {
+  const extensions = new Set(['.ts', '.js', '.py', '.go', '.rs', '.swift', '.java']);
+  const ignore = new Set(['node_modules', '.git', '.venv', '__pycache__']);
+
+  function scan(currentDir, depth) {
+    if (depth > 3) return false;
+    try {
+      const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (ignore.has(entry.name)) continue;
+        if (entry.isFile() && extensions.has(path.extname(entry.name))) return true;
+        if (entry.isDirectory() && scan(path.join(currentDir, entry.name), depth + 1)) return true;
+      }
+    } catch {}
+    return false;
+  }
+
+  return scan(dir, 0);
+}
+
 module.exports = {
   MODEL_PROFILES,
   output,
@@ -489,4 +520,6 @@ module.exports = {
   getMilestoneInfo,
   getMilestonePhaseFilter,
   toPosixPath,
+  ensureWithinCwd,
+  hasSourceFiles,
 };

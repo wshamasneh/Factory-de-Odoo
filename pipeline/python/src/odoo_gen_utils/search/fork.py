@@ -7,8 +7,23 @@ setup for fork-and-extend workflows.
 
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
+
+_SAFE_REPO_NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+_SAFE_BRANCH = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9./_-]*$")
+_SAFE_MODULE_NAME = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
+
+
+def _validate_clone_inputs(repo_name: str, module_name: str, branch: str) -> None:
+    """Validate inputs for clone_oca_module to prevent path traversal."""
+    if not _SAFE_REPO_NAME.match(repo_name):
+        raise ValueError(f"Unsafe repo_name: {repo_name!r}")
+    if not _SAFE_MODULE_NAME.match(module_name):
+        raise ValueError(f"Unsafe module_name: {module_name!r}")
+    if not _SAFE_BRANCH.match(branch):
+        raise ValueError(f"Unsafe branch: {branch!r}")
 
 
 def clone_oca_module(
@@ -34,6 +49,7 @@ def clone_oca_module(
     Raises:
         subprocess.CalledProcessError: If any git command fails (check=True).
     """
+    _validate_clone_inputs(repo_name, module_name, branch)
     repo_url = f"https://github.com/OCA/{repo_name}.git"
     clone_dir = output_dir / f"oca_{repo_name}"
 

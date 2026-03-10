@@ -267,8 +267,8 @@ function cmdFrontmatterMerge(cwd, filePath, data, raw) {
   const fm = extractFrontmatter(content);
   let mergeData;
   try { mergeData = JSON.parse(data); } catch { error('Invalid JSON for --data'); return; }
-  Object.assign(fm, mergeData);
-  const newContent = spliceFrontmatter(content, fm);
+  const mergedFm = { ...fm, ...mergeData };
+  const newContent = spliceFrontmatter(content, mergedFm);
   fs.writeFileSync(fullPath, newContent, 'utf-8');
   output({ merged: true, fields: Object.keys(mergeData) }, raw, 'true');
 }
