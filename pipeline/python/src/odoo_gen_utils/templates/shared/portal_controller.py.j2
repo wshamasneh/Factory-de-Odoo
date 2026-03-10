@@ -9,7 +9,9 @@ from odoo.addons.portal.controllers.portal import CustomerPortal, pager as porta
 
 class {{ controller_class }}(CustomerPortal):
 {% set counter_pages = portal_pages | selectattr("home_counter") | list %}
-{% if counter_pages %}
+{% if not portal_pages and not portal_models %}
+    pass
+{% elif counter_pages %}
 
     def _prepare_home_portal_values(self, counters):
         values = super()._prepare_home_portal_values(counters)

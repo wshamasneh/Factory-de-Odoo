@@ -34,11 +34,11 @@ class {{ wizard_class }}(models.TransientModel):
         """Validate uploaded file is a valid xlsx (ZIP) by checking magic bytes."""
         self.ensure_one()
         if not self.file_data:
-            raise ValidationError("No file uploaded.")
+            raise ValidationError(self.env._("No file uploaded."))
         raw = base64.b64decode(self.file_data)
         if not raw[:4] == b'PK\x03\x04':
             raise ValidationError(
-                "Invalid file format. Please upload a valid .xlsx file."
+                self.env._("Invalid file format. Please upload a valid .xlsx file.")
             )
 
     def action_preview(self):

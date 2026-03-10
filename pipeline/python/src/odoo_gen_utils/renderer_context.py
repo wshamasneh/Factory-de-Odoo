@@ -534,13 +534,14 @@ def _compute_manifest_data(
     """Compute the canonical manifest data file list.
 
     Canonical load order:
-    1. security/security.xml
-    2. security/ir.model.access.csv
+    1. security/security.xml (groups, categories)
+    2. security/ir.model.access.csv (ACLs reference groups)
     3. security/record_rules.xml (only if has_company_modules)
-    4. data files (sequences.xml first, then data.xml)
-    5. per-model view files (*_views.xml, *_action.xml)
-    6. views/menu.xml
-    7. wizard view files (*_wizard_form.xml)
+    4. data files (sequences, data, cron, reports, mail templates)
+    5. wizard view files (define wizard actions — BEFORE model views)
+    6. per-model view files (*_views.xml, *_action.xml — may reference wizard actions)
+    7. dashboard view files (graph, pivot, kanban, cohort)
+    8. views/menu.xml (references all actions — LAST)
 
     Args:
         spec: Full module specification dictionary.
@@ -564,6 +565,11 @@ def _compute_manifest_data(
     if any(m.get("has_notifications") for m in spec.get("models", [])):
         manifest_files.append("data/mail_template_data.xml")
 
+    # Wizard views define ir.actions.act_window records that model views
+    # may reference via %(module.wizard_action_id)d in button definitions.
+    # They MUST be loaded before model views to avoid External ID errors.
+    manifest_files.extend(wizard_view_files)
+
     for model in spec.get("models", []):
         model_var = _to_python_var(model["name"])
         manifest_files.append(f"views/{model_var}_views.xml")
@@ -584,7 +590,6 @@ def _compute_manifest_data(
                 manifest_files.append(f"views/{model_xml}_cohort.xml")
 
     manifest_files.append("views/menu.xml")
-    manifest_files.extend(wizard_view_files)
 
     return manifest_files
 

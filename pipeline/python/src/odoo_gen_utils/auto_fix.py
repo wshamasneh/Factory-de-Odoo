@@ -64,7 +64,7 @@ _MANIFEST_KEY_DEFAULTS: dict[str, str] = {
     "category": "Uncategorized",
     "version": "17.0.1.0.0",
     "application": "False",
-    "installable": "True",
+    # "installable" intentionally omitted — True is the default (C8116)
 }
 
 # Docker diagnosis text -> pattern ID mapping keywords

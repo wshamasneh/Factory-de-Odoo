@@ -6,9 +6,7 @@ from odoo.exceptions import ValidationError
 {% if has_approval or has_document_verification %}
 from odoo.exceptions import UserError
 {% endif %}
-{% if needs_translate %}
-from odoo.tools.translate import _
-{% endif %}
+{# self.env._() is used directly in method bodies (W8161) — no standalone _ import needed #}
 {% if needs_logger %}
 
 import logging
@@ -250,7 +248,7 @@ class {{ model_name | to_class }}(models.Model):
         for rec in self:
             if {{ constraint.check_expr }}:
                 raise ValidationError(
-                    _("{{ constraint.message }}")
+                    self.env._("{{ constraint.message }}")
                 )
 {% elif constraint.type.startswith('pk_') or constraint.type.startswith('ac_year_') or constraint.type.startswith('ac_term_') or constraint.type.startswith('doc_file_') %}
 
@@ -329,7 +327,7 @@ class {{ model_name | to_class }}(models.Model):
         # Approval state guard: block direct state modification
         if '{{ approval_state_field_name }}' in vals and not self.env.context.get('_force_state'):
             if not self.env.is_superuser():
-                raise UserError(_("State transitions must use action buttons."))
+                raise UserError(self.env._("State transitions must use action buttons."))
 {% endif %}
 {% if has_webhooks and webhook_on_write and not has_audit %}
         # Capture old values for webhook watched fields
@@ -437,7 +435,7 @@ class {{ model_name | to_class }}(models.Model):
         """Submit record for approval."""
         self.ensure_one()
         if self.{{ approval_state_field_name }} != '{{ approval_submit_action.from_state }}':
-            raise UserError(_("Record must be in '{{ approval_submit_action.from_state_label }}' state to submit."))
+            raise UserError(self.env._("Record must be in '{{ approval_submit_action.from_state_label }}' state to submit."))
         self.with_context(_force_state=True).write({
             '{{ approval_state_field_name }}': '{{ approval_submit_action.to_state }}',
         })
@@ -459,9 +457,9 @@ class {{ model_name | to_class }}(models.Model):
         """{{ action.role_label }} approval: {{ action.from_state }} -> {{ action.to_state }}."""
         self.ensure_one()
         if not self.env.user.has_group('{{ action.group_xml_id }}'):
-            raise UserError(_("Only the {{ action.role_label }} can approve at this stage."))
+            raise UserError(self.env._("Only the {{ action.role_label }} can approve at this stage."))
         if self.{{ approval_state_field_name }} != '{{ action.from_state }}':
-            raise UserError(_(
+            raise UserError(self.env._(
                 "Record must be in '{{ action.from_state_label }}' state to approve."
             ))
         self.with_context(_force_state=True).write({
@@ -485,7 +483,7 @@ class {{ model_name | to_class }}(models.Model):
         """Reject and return to {{ on_reject }} state."""
         self.ensure_one()
         if self.{{ approval_state_field_name }} not in {{ reject_allowed_from }}:
-            raise UserError(_("Rejection is not allowed from the current stage."))
+            raise UserError(self.env._("Rejection is not allowed from the current stage."))
         self.with_context(_force_state=True).write({
             '{{ approval_state_field_name }}': '{{ on_reject }}',
         })

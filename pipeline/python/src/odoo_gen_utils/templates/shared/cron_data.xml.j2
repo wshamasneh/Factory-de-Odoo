@@ -15,7 +15,7 @@
 {% if cron.nextcall is defined %}
         <field name="nextcall">{{ cron.nextcall }}</field>
 {% endif %}
-        <field name="model_id" ref="model_{{ cron.model_name | to_xml_id }}"/>
+        <field name="model_id" ref="model_{{ (cron.model_name | default(cron.model)) | to_xml_id }}"/>
         <field name="state">code</field>
 {% if cron.code is defined %}
         <field name="code">{{ cron.code }}</field>
