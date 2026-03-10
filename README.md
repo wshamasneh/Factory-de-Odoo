@@ -183,7 +183,7 @@ Factory-de-Odoo/
 
 ### Orchestrator Deep Dive
 
-The orchestrator is a fork of [GSD (Get Shit Done)](https://github.com/gsd-build/get-shit-done), specialized for Odoo ERP generation.
+The orchestrator manages the full ERP lifecycle — module decomposition, cross-module state tracking, and sequential generation through the pipeline.
 
 **Module Lifecycle:**
 ```
@@ -433,7 +433,7 @@ See [pipeline/CONTRIBUTING.md](pipeline/CONTRIBUTING.md) for development setup, 
 
 ## License
 
-- **Orchestrator**: MIT (fork of [GSD](https://github.com/gsd-build/get-shit-done))
+- **Orchestrator**: MIT
 - **Pipeline**: LGPL-3.0
 
 ---

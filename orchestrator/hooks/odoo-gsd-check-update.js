@@ -57,12 +57,12 @@ const child = spawn(process.execPath, ['-e', `
     } else if (fs.existsSync(globalVersionFile)) {
       installed = fs.readFileSync(globalVersionFile, 'utf8').trim();
     }
-  } catch (e) {}
+  } catch (e) { /* VERSION file may not exist yet */ }
 
   let latest = null;
   try {
     latest = execSync('npm view odoo-gsd-cc version', { encoding: 'utf8', timeout: 10000, windowsHide: true }).trim();
-  } catch (e) {}
+  } catch (e) { /* npm unavailable or network error */ }
 
   const result = {
     update_available: latest && installed !== latest,

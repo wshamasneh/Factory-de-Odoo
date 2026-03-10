@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # ==============================================================================
-# odoo-gen Extension Installer
-# Registers the odoo-gen GSD extension with Claude Code environment.
+# odoo-gen Pipeline Installer
+# Sets up the odoo-gen pipeline (Python venv, commands, agents, knowledge).
 #
 # Usage:
 #   git clone <repo> ~/.claude/odoo-gen
@@ -35,19 +35,6 @@ error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 # ==============================================================================
 
 info "Checking prerequisites..."
-
-# Check GSD is installed
-if [ ! -d "$HOME/.claude/odoo-gsd" ]; then
-    error "GSD (Get Shit Done) not found at ~/.claude/odoo-gsd/"
-    error "odoo-gen is a GSD extension and requires GSD to be installed first."
-    error ""
-    error "Install GSD:"
-    error "  npx get-shit-done-cc@latest"
-    error ""
-    error "More info: https://github.com/coleam00/get-shit-done-cc"
-    exit 1
-fi
-success "GSD found at ~/.claude/odoo-gsd/"
 
 # Check uv is installed
 if ! command -v uv &>/dev/null; then

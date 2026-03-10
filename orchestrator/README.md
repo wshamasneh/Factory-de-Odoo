@@ -2,8 +2,6 @@
 
 **Odoo ERP Module Orchestrator** — A Claude Code extension that decomposes a university ERP PRD into 20+ modules and drives the [odoo-gen](https://github.com/Inshal5Rauf1/Odoo-Development-Automation) belt to generate them sequentially with cross-module coherence.
 
-Fork of [GSD (Get Shit Done)](https://github.com/gsd-build/get-shit-done), specialized for Odoo ERP module generation at scale.
-
 ## Architecture
 
 ```

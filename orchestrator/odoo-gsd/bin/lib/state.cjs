@@ -26,7 +26,7 @@ function cmdStateLoad(cwd, raw) {
   let stateRaw = '';
   try {
     stateRaw = fs.readFileSync(path.join(planningDir, 'STATE.md'), 'utf-8');
-  } catch {}
+  } catch { /* STATE.md may not exist yet */ }
 
   const configExists = fs.existsSync(path.join(planningDir, 'config.json'));
   const roadmapExists = fs.existsSync(path.join(planningDir, 'ROADMAP.md'));
@@ -562,7 +562,7 @@ function buildStateFrontmatter(bodyContent, cwd) {
       const info = getMilestoneInfo(cwd);
       milestone = info.version;
       milestoneName = info.name;
-    } catch {}
+    } catch { /* milestone info may be unavailable */ }
   }
 
   let totalPhases = totalPhasesRaw ? parseInt(totalPhasesRaw, 10) : null;
@@ -597,7 +597,7 @@ function buildStateFrontmatter(bodyContent, cwd) {
         totalPlans = diskTotalPlans;
         completedPlans = diskTotalSummaries;
       }
-    } catch {}
+    } catch { /* phases dir may not exist */ }
   }
 
   let progressPercent = null;

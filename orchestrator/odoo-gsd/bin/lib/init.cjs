@@ -152,7 +152,7 @@ function cmdInitPlanPhase(cwd, phase, raw) {
       if (uatFile) {
         result.uat_path = toPosixPath(path.join(phaseInfo.directory, uatFile));
       }
-    } catch {}
+    } catch { /* phase dir files may be unreadable */ }
   }
 
   output(result, raw);
@@ -258,7 +258,7 @@ function cmdInitQuick(cwd, description, raw) {
     if (existing.length > 0) {
       nextNum = Math.max(...existing) + 1;
     }
-  } catch {}
+  } catch { /* quick dir may not exist */ }
 
   const result = {
     // Models
@@ -299,7 +299,7 @@ function cmdInitResume(cwd, raw) {
   let interruptedAgentId = null;
   try {
     interruptedAgentId = fs.readFileSync(path.join(cwd, '.planning', 'current-agent-id.txt'), 'utf-8').trim();
-  } catch {}
+  } catch { /* agent ID file may not exist */ }
 
   const result = {
     // File existence
@@ -428,7 +428,7 @@ function cmdInitPhaseOp(cwd, phase, raw) {
       if (uatFile) {
         result.uat_path = toPosixPath(path.join(phaseInfo.directory, uatFile));
       }
-    } catch {}
+    } catch { /* phase dir files may be unreadable */ }
   }
 
   output(result, raw);
@@ -463,9 +463,9 @@ function cmdInitTodos(cwd, area, raw) {
           area: todoArea,
           path: '.planning/todos/pending/' + file,
         });
-      } catch {}
+      } catch { /* skip unreadable todo files */ }
     }
-  } catch {}
+  } catch { /* pending dir may not exist */ }
 
   const result = {
     // Config
@@ -512,9 +512,9 @@ function cmdInitMilestoneOp(cwd, raw) {
         const phaseFiles = fs.readdirSync(path.join(phasesDir, dir));
         const hasSummary = phaseFiles.some(f => f.endsWith('-SUMMARY.md') || f === 'SUMMARY.md');
         if (hasSummary) completedPhases++;
-      } catch {}
+      } catch { /* skip unreadable phase dirs */ }
     }
-  } catch {}
+  } catch { /* phases dir may not exist */ }
 
   // Check archive
   const archiveDir = path.join(cwd, '.planning', 'archive');
@@ -523,7 +523,7 @@ function cmdInitMilestoneOp(cwd, raw) {
     archivedMilestones = fs.readdirSync(archiveDir, { withFileTypes: true })
       .filter(e => e.isDirectory())
       .map(e => e.name);
-  } catch {}
+  } catch { /* archive dir may not exist */ }
 
   const result = {
     // Config
@@ -562,7 +562,7 @@ function cmdInitMapCodebase(cwd, raw) {
   let existingMaps = [];
   try {
     existingMaps = fs.readdirSync(codebaseDir).filter(f => f.endsWith('.md'));
-  } catch {}
+  } catch { /* codebase dir may not exist */ }
 
   const result = {
     // Models
@@ -638,7 +638,7 @@ function cmdInitProgress(cwd, raw) {
         nextPhase = phaseInfo;
       }
     }
-  } catch {}
+  } catch { /* phases dir may not exist */ }
 
   // Check for paused work
   let pausedAt = null;
@@ -646,7 +646,7 @@ function cmdInitProgress(cwd, raw) {
     const state = fs.readFileSync(path.join(cwd, '.planning', 'STATE.md'), 'utf-8');
     const pauseMatch = state.match(/\*\*Paused At:\*\*\s*(.+)/);
     if (pauseMatch) pausedAt = pauseMatch[1].trim();
-  } catch {}
+  } catch { /* STATE.md may not exist */ }
 
   const result = {
     // Models

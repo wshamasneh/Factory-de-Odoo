@@ -83,7 +83,7 @@ process.stdin.on('end', () => {
             const todos = JSON.parse(fs.readFileSync(path.join(todosDir, files[0].name), 'utf8'));
             const inProgress = todos.find(t => t.status === 'in_progress');
             if (inProgress) task = inProgress.activeForm || '';
-          } catch (e) {}
+          } catch (e) { /* todo JSON parse error — non-critical for statusline */ }
         }
       } catch (e) {
         // Silently fail on file system errors - don't break statusline
@@ -99,7 +99,7 @@ process.stdin.on('end', () => {
         if (cache.update_available) {
           gsdUpdate = '\x1b[33m⬆ /odoo-gsd:update\x1b[0m │ ';
         }
-      } catch (e) {}
+      } catch (e) { /* update cache JSON parse error — non-critical */ }
     }
 
     // Output

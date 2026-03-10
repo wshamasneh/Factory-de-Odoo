@@ -1,6 +1,6 @@
 # Odoo Module Automation
 
-An AI-powered extension for the [GSD (Get Shit Done)](https://github.com/get-shit-done/gsd) framework that automates Odoo 17.0 and 18.0 module development end-to-end. Describe a business need in natural language, and the system produces OCA-grade Odoo modules — complete with models, views, security, tests, and i18n.
+An AI-powered system that automates Odoo 17.0 and 18.0 module development end-to-end. Describe a business need in natural language, and the system produces OCA-grade Odoo modules — complete with models, views, security, tests, and i18n.
 
 ## How It Works
 
@@ -51,7 +51,6 @@ You: "I need a module to track employee training courses and sessions"
 
 ## Prerequisites
 
-- **[GSD](https://github.com/get-shit-done/gsd)** installed at `~/.claude/get-shit-done/`
 - **[uv](https://docs.astral.sh/uv/)** — Python package manager
 - **Python 3.12** (Odoo 17 requires 3.10-3.12; 3.13+ breaks validation)
 - **Docker + Docker Compose v2** (for module validation and dev instance)
@@ -70,7 +69,7 @@ bash install.sh
 ```
 
 The installer:
-1. Verifies GSD is installed and Python 3.12 is available
+1. Verifies Python 3.12 is available
 2. Creates a Python virtual environment with `uv`
 3. Installs the `odoo-gen-utils` package (editable)
 4. Registers 13 commands as `/odoo-gen:*` in your AI assistant
@@ -154,11 +153,11 @@ Clones an OCA module and sets up a companion `_ext` module for customization.
 ## Architecture
 
 ```
-Layer 1: GSD Orchestration (INHERITED)
-  Context management, state persistence, hallucination prevention,
+Layer 1: Orchestrator (Factory de Odoo)
+  Context management, state persistence, cross-module coherence,
   phase/wave execution, checkpoint-based human review, Git integration
 
-Layer 2: Odoo Extension (THIS PROJECT)
+Layer 2: Pipeline (THIS COMPONENT)
   8 specialized agents, 13 commands, Jinja2 templates,
   knowledge base, workflows
 
@@ -167,7 +166,7 @@ Layer 3: Python Utilities (odoo-gen-utils)
   Docker validation, ChromaDB search, auto-fix pipeline
 
 Layer 4: AI Coding Assistant (USER'S ENVIRONMENT)
-  Claude Code, Gemini, Codex, OpenCode — GSD + odoo-gen installed
+  Claude Code, Gemini, Codex, OpenCode — orchestrator + pipeline installed
 ```
 
 ## Project Structure
@@ -185,7 +184,7 @@ odoo-gen/
 │   ├── odoo-validator.md
 │   ├── odoo-search.md
 │   └── odoo-extend.md
-├── commands/               # 13 GSD command definitions
+├── commands/               # 13 command definitions
 ├── knowledge/              # Odoo domain knowledge base
 │   ├── MASTER.md           # Integration guide
 │   ├── models.md           # ORM models, fields, computed
@@ -204,7 +203,7 @@ odoo-gen/
 │   ├── 17.0/               # Odoo 17 specific
 │   ├── 18.0/               # Odoo 18 specific
 │   └── shared/             # Common (fallback)
-├── workflows/              # GSD workflow configs
+├── workflows/              # Workflow configs
 ├── docker/                 # Docker Compose (Odoo 17 + PostgreSQL 16)
 │   └── docker-compose.yml
 └── python/                 # Python package

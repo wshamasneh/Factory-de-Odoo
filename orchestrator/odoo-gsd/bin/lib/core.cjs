@@ -91,7 +91,7 @@ function loadConfig(cwd) {
       const depthToGranularity = { quick: 'coarse', standard: 'standard', comprehensive: 'fine' };
       parsed.granularity = depthToGranularity[parsed.depth] || parsed.depth;
       delete parsed.depth;
-      try { fs.writeFileSync(configPath, JSON.stringify(parsed, null, 2), 'utf-8'); } catch {}
+      try { fs.writeFileSync(configPath, JSON.stringify(parsed, null, 2), 'utf-8'); } catch { /* best-effort config migration */ }
     }
 
     const get = (key, nested) => {
@@ -281,7 +281,7 @@ function findPhaseInternal(cwd, phase) {
         return result;
       }
     }
-  } catch {}
+  } catch { /* archived milestone search may fail */ }
 
   return null;
 }
@@ -316,7 +316,7 @@ function getArchivedPhaseDirs(cwd) {
         });
       }
     }
-  } catch {}
+  } catch { /* archived phases listing may fail */ }
 
   return results;
 }
@@ -440,7 +440,7 @@ function getMilestonePhaseFilter(cwd) {
     while ((m = phasePattern.exec(roadmap)) !== null) {
       milestonePhaseNums.add(m[1]);
     }
-  } catch {}
+  } catch { /* ROADMAP.md may not exist */ }
 
   if (milestonePhaseNums.size === 0) {
     const passAll = () => true;
@@ -492,7 +492,7 @@ function hasSourceFiles(dir) {
         if (entry.isFile() && extensions.has(path.extname(entry.name))) return true;
         if (entry.isDirectory() && scan(path.join(currentDir, entry.name), depth + 1)) return true;
       }
-    } catch {}
+    } catch { /* dir may be unreadable */ }
     return false;
   }
 
