@@ -1,0 +1,1 @@
+# Logic writer test fixtures

@@ -1,0 +1,59 @@
+{# record_rules.xml.j2 -- Multi-scope record rules with dynamic role binding #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+{% for model in models if model.record_rule_scopes %}
+{% set bindings = model.get("record_rule_bindings", {}) %}
+{% if "ownership" in model.record_rule_scopes %}
+{% set own_group = bindings.get("ownership", security_roles[0].xml_id) %}
+    <record id="rule_{{ model.name | to_python_var }}_own" model="ir.rule">
+        <field name="name">{{ model.name }}: Own Records</field>
+        <field name="model_id" ref="{{ model.name | model_ref }}"/>
+        <field name="groups" eval="[(4, ref('{{ module_technical_name }}.{{ own_group }}'))]"/>
+        <field name="domain_force">[('create_uid', '=', user.id)]</field>
+    </record>
+{% endif %}
+{% if "department" in model.record_rule_scopes %}
+{% set dept_group = bindings.get("department", security_roles[0].xml_id) %}
+    <record id="rule_{{ model.name | to_python_var }}_department" model="ir.rule">
+        <field name="name">{{ model.name }}: Department</field>
+        <field name="model_id" ref="{{ model.name | model_ref }}"/>
+        <field name="groups" eval="[(4, ref('{{ module_technical_name }}.{{ dept_group }}'))]"/>
+        <field name="domain_force">[('department_id', '=', user.department_id.id)]</field>
+    </record>
+{% endif %}
+{% if "company" in model.record_rule_scopes %}
+    <record id="rule_{{ model.name | to_python_var }}_company" model="ir.rule">
+        <field name="name">{{ model.name }}: Company</field>
+        <field name="model_id" ref="{{ model.name | model_ref }}"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+{% endif %}
+{% if "approval" in model.record_rule_scopes %}
+{% for rule in model.get("approval_record_rules", []) %}
+    <record id="{{ rule.xml_id }}" model="ir.rule">
+        <field name="name">{{ rule.name }}</field>
+        <field name="model_id" ref="{{ model.name | model_ref }}"/>
+{% if rule.get("group_xml_id") %}
+        <field name="groups" eval="[(4, ref('{{ rule.group_xml_id }}'))]"/>
+{% else %}
+        <field name="global" eval="True"/>
+{% endif %}
+        <field name="domain_force">{{ rule.domain_force }}</field>
+    </record>
+{% endfor %}
+{% endif %}
+{% for rule in model.get("custom_record_rules", []) %}
+    <record id="{{ rule.xml_id }}" model="ir.rule">
+        <field name="name">{{ rule.get("label", rule.get("name", "Custom Rule")) }}</field>
+        <field name="model_id" ref="{{ model.name | model_ref }}"/>
+{% if rule.get("group_xml_id") %}
+        <field name="groups" eval="[(4, ref('{{ rule.group_xml_id }}'))]"/>
+{% else %}
+        <field name="global" eval="True"/>
+{% endif %}
+        <field name="domain_force">{{ rule.domain_force }}</field>
+    </record>
+{% endfor %}
+{% endfor %}
+</odoo>

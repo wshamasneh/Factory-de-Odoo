@@ -1,0 +1,30 @@
+{# bulk_wizard_js.js.j2 -- bus.bus progress listener for bulk operations #}
+/** @odoo-module **/
+
+import { registry } from "@web/core/registry";
+
+/**
+ * Bulk operation progress listener.
+ * Listens for 'bulk_operation_progress' bus messages and updates
+ * the progress bar in the wizard form view.
+ *
+ * Module: {{ module_name }}
+ */
+registry.category("bus.listeners").add("bulk_operation_progress", {
+    listener(message) {
+        const { percentage, processed, total, operation_name } = message;
+        const progressEl = document.querySelector('.o_bulk_progress');
+        if (progressEl) {
+            const bar = progressEl.querySelector('.progress-bar');
+            const text = progressEl.querySelector('.progress-text');
+            if (bar) {
+                bar.style.width = `${percentage}%`;
+                bar.setAttribute('aria-valuenow', percentage);
+            }
+            if (text) {
+                text.textContent =
+                    `${operation_name}: ${processed} / ${total} (${percentage}%)`;
+            }
+        }
+    },
+});

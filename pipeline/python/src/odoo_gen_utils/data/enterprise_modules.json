@@ -1,0 +1,230 @@
+{
+  "enterprise_modules": {
+    "account_asset": {
+      "display_name": "Assets Management",
+      "category": "Accounting",
+      "description": "Fixed asset tracking and depreciation",
+      "community_alternative": {
+        "oca_module": "account_asset_management",
+        "oca_repo": "OCA/account-financial-tools",
+        "notes": "Full-featured asset management with enhanced depreciation methods."
+      }
+    },
+    "account_accountant": {
+      "display_name": "Accounting",
+      "category": "Accounting",
+      "description": "Full accounting features (Invoicing is CE, full accounting is EE)",
+      "community_alternative": null
+    },
+    "helpdesk": {
+      "display_name": "Helpdesk",
+      "category": "Services",
+      "description": "Ticket tracking and resolution",
+      "community_alternative": {
+        "oca_module": "helpdesk_mgmt",
+        "oca_repo": "OCA/helpdesk",
+        "notes": "Tickets, stages, assignment. Missing: SLA tracking, customer portal."
+      }
+    },
+    "planning": {
+      "display_name": "Planning",
+      "category": "Services",
+      "description": "Team scheduling and resource planning",
+      "community_alternative": {
+        "oca_module": "project_forecast",
+        "oca_repo": "OCA/project",
+        "notes": "Resource scheduling. Missing: advanced conflict detection."
+      }
+    },
+    "field_service": {
+      "display_name": "Field Service",
+      "category": "Services",
+      "description": "On-site service management",
+      "community_alternative": {
+        "oca_module": "fieldservice",
+        "oca_repo": "OCA/field-service",
+        "notes": "Comprehensive field service management with orders and territories."
+      }
+    },
+    "appointment": {
+      "display_name": "Appointments",
+      "category": "Services",
+      "description": "Online appointment booking",
+      "community_alternative": null
+    },
+    "timesheet_grid": {
+      "display_name": "Timesheet Grid",
+      "category": "Services",
+      "description": "Grid view for timesheets (base timesheets is CE)",
+      "community_alternative": null
+    },
+    "payroll": {
+      "display_name": "Payroll",
+      "category": "HR",
+      "description": "Payroll management",
+      "community_alternative": {
+        "oca_module": "payroll_account",
+        "oca_repo": "OCA/payroll",
+        "notes": "Partial coverage. Country-specific localizations needed."
+      }
+    },
+    "appraisals": {
+      "display_name": "Appraisals",
+      "category": "HR",
+      "description": "Employee appraisals with advanced features",
+      "community_alternative": null
+    },
+    "quality_control": {
+      "display_name": "Quality Control",
+      "category": "Manufacturing",
+      "description": "Quality checks and control points",
+      "community_alternative": {
+        "oca_module": "quality_control_oca",
+        "oca_repo": "OCA/manufacture",
+        "notes": "Basic quality checks. Missing: advanced control plans."
+      }
+    },
+    "quality": {
+      "display_name": "Quality",
+      "category": "Manufacturing",
+      "description": "Quality management system",
+      "community_alternative": {
+        "oca_module": "quality_control_oca",
+        "oca_repo": "OCA/manufacture",
+        "notes": "Basic quality management via OCA quality_control_oca."
+      }
+    },
+    "mrp_workorder": {
+      "display_name": "MRP Work Orders",
+      "category": "Manufacturing",
+      "description": "Work orders and shop floor management",
+      "community_alternative": null
+    },
+    "stock_barcode": {
+      "display_name": "Barcode",
+      "category": "Manufacturing",
+      "description": "Barcode scanner for inventory operations",
+      "community_alternative": null
+    },
+    "mrp_plm": {
+      "display_name": "PLM",
+      "category": "Manufacturing",
+      "description": "Product lifecycle management",
+      "community_alternative": null
+    },
+    "mrp_mps": {
+      "display_name": "Master Production Schedule",
+      "category": "Manufacturing",
+      "description": "Master production scheduling",
+      "community_alternative": null
+    },
+    "marketing_automation": {
+      "display_name": "Marketing Automation",
+      "category": "Marketing",
+      "description": "Marketing automation workflows",
+      "community_alternative": null
+    },
+    "social_marketing": {
+      "display_name": "Social Marketing",
+      "category": "Marketing",
+      "description": "Social media management and posting",
+      "community_alternative": null
+    },
+    "website_studio": {
+      "display_name": "Website Studio",
+      "category": "Websites",
+      "description": "Studio for website customization",
+      "community_alternative": null
+    },
+    "documents": {
+      "display_name": "Documents",
+      "category": "Productivity",
+      "description": "Document management system",
+      "community_alternative": {
+        "oca_module": "dms",
+        "oca_repo": "OCA/dms",
+        "notes": "Document management with folder hierarchy and access control."
+      }
+    },
+    "sign": {
+      "display_name": "Sign",
+      "category": "Productivity",
+      "description": "Electronic signatures",
+      "community_alternative": null
+    },
+    "knowledge": {
+      "display_name": "Knowledge",
+      "category": "Productivity",
+      "description": "Knowledge base and wiki",
+      "community_alternative": null
+    },
+    "voip": {
+      "display_name": "VoIP",
+      "category": "Productivity",
+      "description": "VoIP phone integration",
+      "community_alternative": null
+    },
+    "data_cleaning": {
+      "display_name": "Data Cleaning",
+      "category": "Productivity",
+      "description": "Data deduplication and cleaning",
+      "community_alternative": null
+    },
+    "web_studio": {
+      "display_name": "Studio",
+      "category": "Customization",
+      "description": "Odoo Studio visual customizer",
+      "community_alternative": null
+    },
+    "web_dashboard": {
+      "display_name": "Dashboard View",
+      "category": "Views",
+      "description": "Dashboard view type (EE only)",
+      "community_alternative": null
+    },
+    "web_map": {
+      "display_name": "Map View",
+      "category": "Views",
+      "description": "Map view type for geographic data",
+      "community_alternative": null
+    },
+    "web_cohort": {
+      "display_name": "Cohort View",
+      "category": "Views",
+      "description": "Cohort analysis view type",
+      "community_alternative": null
+    },
+    "web_gantt": {
+      "display_name": "Gantt View",
+      "category": "Views",
+      "description": "Gantt chart view (advanced features EE)",
+      "community_alternative": null
+    },
+    "iot": {
+      "display_name": "IoT",
+      "category": "Other",
+      "description": "IoT box integration for hardware devices",
+      "community_alternative": null
+    },
+    "rental": {
+      "display_name": "Rental",
+      "category": "Other",
+      "description": "Rental management",
+      "community_alternative": {
+        "oca_module": "rental",
+        "oca_repo": "OCA/rental",
+        "notes": "Basic rental flows. Missing: advanced pricing rules."
+      }
+    },
+    "sale_subscription": {
+      "display_name": "Subscriptions",
+      "category": "Other",
+      "description": "Subscription management and recurring invoicing",
+      "community_alternative": {
+        "oca_module": "contract",
+        "oca_repo": "OCA/contract",
+        "notes": "Recurring contracts and invoicing. Different approach than EE subscriptions."
+      }
+    }
+  }
+}

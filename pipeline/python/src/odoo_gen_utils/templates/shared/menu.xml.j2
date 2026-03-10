@@ -1,0 +1,30 @@
+{# menu.xml.j2 -- Odoo menu items for all models in the module #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+{% if application %}
+    <!-- Root Menu -->
+    <menuitem id="menu_{{ module_name }}_root"
+              name="{{ module_title }}"
+              web_icon="{{ module_name }},static/description/icon.png"
+              sequence="10"/>
+{% endif %}
+
+    <!-- Configuration/Category Menu -->
+    <menuitem id="menu_{{ module_name }}_main"
+              name="{{ module_title }}"
+{% if application %}
+              parent="menu_{{ module_name }}_root"
+{% endif %}
+              sequence="10"/>
+
+{% for model in models %}
+    <!-- {{ model.description | default(model.name) }} Menu Item -->
+    <menuitem id="menu_{{ model.name | to_xml_id }}"
+              name="{{ model.description | default(model.name) }}"
+              parent="menu_{{ module_name }}_main"
+              action="action_{{ model.name | to_xml_id }}"
+              sequence="{{ loop.index0 * 10 + 10 }}"/>
+
+{% endfor %}
+</odoo>

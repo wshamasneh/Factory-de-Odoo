@@ -1,0 +1,4 @@
+{# init_tests.py.j2 -- tests/__init__.py importing each test file #}
+{% for model in models %}
+from . import test_{{ model.name | to_python_var }}
+{% endfor %}

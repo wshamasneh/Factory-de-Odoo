@@ -1,0 +1,100 @@
+{# bulk_wizard_views.xml.j2 -- Multi-step bulk wizard form view with progress bar #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Bulk Wizard Form View: {{ op.name }} -->
+        <record id="view_{{ op.wizard_var }}_form" model="ir.ui.view">
+            <field name="name">{{ op.wizard_model }}.view.form</field>
+            <field name="model">{{ op.wizard_model }}</field>
+            <field name="arch" type="xml">
+                <form string="{{ op.name }}">
+                    <header>
+                        <button name="action_preview"
+                                string="Preview"
+                                type="object"
+                                class="btn-primary"
+                                invisible="state != 'select'"/>
+                        <button name="action_process"
+                                string="Process"
+                                type="object"
+                                class="btn-primary btn-danger"
+                                invisible="state != 'preview'"
+                                confirm="This will process all selected records. Continue?"/>
+                        <button string="Close"
+                                special="cancel"
+                                class="btn-secondary"
+                                invisible="state != 'done'"/>
+                        <field name="state" widget="statusbar" statusbar_visible="select,preview,process,done"/>
+                    </header>
+                    <sheet>
+                        <!-- Select State: Enter filters and wizard fields -->
+                        <group invisible="state != 'select'">
+                            <group string="Filters">
+{% for wf in op.get('wizard_fields', []) %}
+                                <field name="{{ wf.name }}"/>
+{% endfor %}
+                            </group>
+                            <group string="Summary">
+                                <field name="record_count" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <!-- Preview State: Show matching records -->
+                        <group invisible="state != 'preview'">
+                            <field name="preview_line_ids" nolabel="1">
+                                <tree editable="bottom">
+                                    <field name="selected"/>
+{% for field_name in op.get('preview_fields', []) %}
+                                    <field name="{{ field_name }}"/>
+{% endfor %}
+                                </tree>
+                            </field>
+                        </group>
+
+                        <!-- Process State: Show progress bar -->
+                        <group invisible="state != 'process'">
+                            <div class="o_bulk_progress">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                         role="progressbar"
+                                         style="width: 0%"/>
+                                </div>
+                                <span class="progress-text">Starting...</span>
+                            </div>
+                        </group>
+
+                        <!-- Done State: Show results -->
+                        <group invisible="state != 'done'">
+                            <group string="Results">
+                                <field name="success_count"/>
+                                <field name="fail_count"/>
+                            </group>
+                            <group string="Error Log" invisible="not error_log">
+                                <field name="error_log" readonly="1" nolabel="1"/>
+                            </group>
+{% if op.operation == 'create_related' and op.get('create_model') %}
+                            <group>
+                                <button string="View Created Records"
+                                        type="action"
+                                        class="btn-link"
+                                        name="%(action_{{ op.wizard_var }}_view_created)d"
+                                        invisible="success_count == 0"/>
+                            </group>
+{% endif %}
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Bulk Wizard Action: {{ op.name }} -->
+        <record id="action_{{ op.wizard_var }}" model="ir.actions.act_window">
+            <field name="name">{{ op.name }}</field>
+            <field name="res_model">{{ op.wizard_model }}</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+    </data>
+</odoo>

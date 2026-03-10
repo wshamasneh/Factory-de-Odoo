@@ -1,0 +1,97 @@
+{# extension_model.py.j2 -- Odoo _inherit extension model (Phase 59) #}
+from odoo import {{ 'api, ' if needs_api }}fields, models
+
+
+class {{ class_name }}(models.Model):
+    _inherit = '{{ base_model }}'
+
+{% for field in fields %}
+{% if field.type == 'Selection' %}
+    {{ field.name }} = fields.Selection(
+        string="{{ field.string | default(field.name | replace('_', ' ') | title) }}",
+        selection=[
+{% for opt in field.selection %}
+            ("{{ opt[0] }}", "{{ opt[1] }}"),
+{% endfor %}
+        ],
+{% if field.required is defined and field.required %}
+        required=True,
+{% endif %}
+{% if field.groups is defined and field.groups %}
+        groups="{{ field.groups }}",
+{% endif %}
+    )
+{% elif field.type in ('Many2one', 'One2many', 'Many2many') %}
+    {{ field.name }} = fields.{{ field.type }}(
+        comodel_name="{{ field.comodel_name }}",
+{% if field.type == 'One2many' and field.inverse_name is defined %}
+        inverse_name="{{ field.inverse_name }}",
+{% endif %}
+        string="{{ field.string | default(field.name | replace('_', ' ') | title) }}",
+{% if field.required is defined and field.required %}
+        required=True,
+{% endif %}
+{% if field.groups is defined and field.groups %}
+        groups="{{ field.groups }}",
+{% endif %}
+    )
+{% elif field.compute is defined and field.compute %}
+    {{ field.name }} = fields.{{ field.type }}(
+        string="{{ field.string | default(field.name | replace('_', ' ') | title) }}",
+        compute="{{ field.compute }}",
+{% if field.store is defined and field.store %}
+        store=True,
+{% endif %}
+{% if field.groups is defined and field.groups %}
+        groups="{{ field.groups }}",
+{% endif %}
+    )
+{% else %}
+    {{ field.name }} = fields.{{ field.type }}(
+        string="{{ field.string | default(field.name | replace('_', ' ') | title) }}",
+{% if field.required is defined and field.required %}
+        required=True,
+{% endif %}
+{% if field.groups is defined and field.groups %}
+        groups="{{ field.groups }}",
+{% endif %}
+    )
+{% endif %}
+{% endfor %}
+{% for field in computed_fields %}
+    {{ field.name }} = fields.{{ field.type }}(
+        string="{{ field.name | replace('_', ' ') | title }}",
+        compute="{{ field.compute }}",
+{% if field.store is defined and field.store %}
+        store=True,
+{% endif %}
+    )
+{% endfor %}
+{% if sql_constraints %}
+
+    _sql_constraints = [
+{% for c in sql_constraints %}
+        ('{{ c.name }}', '{{ c.definition }}', '{{ c.message }}'),
+{% endfor %}
+    ]
+{% endif %}
+{% for field in computed_fields %}
+
+    @api.depends({% for dep in field.depends %}"{{ dep }}"{% if not loop.last %}, {% endif %}{% endfor %})
+    def {{ field.compute }}(self):
+        # --- BUSINESS LOGIC START ---
+        # TODO: implement {{ field.compute }}
+        for rec in self:
+            rec.{{ field.name }} = {{ 0 if field.type in ('Integer', 'Float') else 'False' if field.type == 'Boolean' else "''" }}
+        # --- BUSINESS LOGIC END ---
+{% endfor %}
+{% for method in methods %}
+
+{% if method.decorator is defined and method.decorator %}
+    {{ method.decorator }}
+{% endif %}
+    def {{ method.name }}(self):
+        # --- BUSINESS LOGIC START ---
+        pass  # TODO: implement {{ method.name }}
+        # --- BUSINESS LOGIC END ---
+{% endfor %}

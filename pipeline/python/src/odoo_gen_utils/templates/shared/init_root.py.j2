@@ -1,0 +1,8 @@
+{# init_root.py.j2 -- Root __init__.py importing subpackages #}
+from . import models
+{% if has_wizards %}
+from . import wizards
+{% endif %}
+{% if has_controllers %}
+from . import controllers
+{% endif %}

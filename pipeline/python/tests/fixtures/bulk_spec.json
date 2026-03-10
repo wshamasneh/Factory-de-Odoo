@@ -1,0 +1,70 @@
+{
+  "module_name": "uni_admission",
+  "depends": ["base", "mail"],
+  "models": [
+    {
+      "name": "admission.application",
+      "description": "Admission Application",
+      "fields": [
+        {"name": "name", "type": "Char", "string": "Name", "required": true},
+        {"name": "program_id", "type": "Many2one", "comodel_name": "academic.program", "string": "Program"},
+        {"name": "cgpa", "type": "Float", "string": "CGPA"},
+        {"name": "merit_rank", "type": "Integer", "string": "Merit Rank"},
+        {"name": "state", "type": "Selection", "string": "Status", "selection": [["draft", "Draft"], ["approved", "Approved"], ["admitted", "Admitted"], ["rejected", "Rejected"]]}
+      ]
+    },
+    {
+      "name": "uni.student",
+      "description": "University Student",
+      "fields": [
+        {"name": "name", "type": "Char", "string": "Name", "required": true},
+        {"name": "program_id", "type": "Many2one", "comodel_name": "academic.program", "string": "Program"},
+        {"name": "department_id", "type": "Many2one", "comodel_name": "hr.department", "string": "Department"},
+        {"name": "enrollment_status", "type": "Selection", "string": "Enrollment Status", "selection": [["active", "Active"], ["graduated", "Graduated"]]}
+      ]
+    }
+  ],
+  "bulk_operations": [
+    {
+      "id": "bulk_admit",
+      "name": "Bulk Admission",
+      "source_model": "admission.application",
+      "wizard_model": "admission.bulk.admit.wizard",
+      "operation": "state_transition",
+      "source_domain": [["state", "=", "approved"]],
+      "target_state": "admitted",
+      "action_method": "action_admit",
+      "preview_fields": ["name", "program_id", "cgpa"],
+      "side_effects": [
+        "Create uni.student record for each admitted applicant",
+        "Create uni.enrollment for first semester courses",
+        "Send admission notification email"
+      ],
+      "batch_size": 50,
+      "allow_partial": true
+    },
+    {
+      "id": "bulk_challan",
+      "name": "Generate Fee Challans",
+      "source_model": "uni.student",
+      "wizard_model": "fee.bulk.challan.wizard",
+      "operation": "create_related",
+      "source_domain": [["enrollment_status", "=", "active"]],
+      "create_model": "fee.invoice",
+      "create_fields": {
+        "student_id": "source.id",
+        "fee_structure_id": "wizard.fee_structure_id",
+        "term_id": "wizard.term_id",
+        "due_date": "wizard.due_date"
+      },
+      "wizard_fields": [
+        {"name": "fee_structure_id", "type": "Many2one", "comodel": "fee.structure", "required": true},
+        {"name": "term_id", "type": "Many2one", "comodel": "academic.term", "required": true},
+        {"name": "due_date", "type": "Date", "required": true}
+      ],
+      "preview_fields": ["name", "program_id", "department_id"],
+      "batch_size": 100,
+      "allow_partial": true
+    }
+  ]
+}

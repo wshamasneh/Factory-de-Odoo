@@ -1,0 +1,25 @@
+{# archival_wizard.py.j2 -- Archival wizard TransientModel #}
+from odoo import api, fields, models
+from dateutil.relativedelta import relativedelta
+
+
+class {{ wizard_class }}(models.TransientModel):
+    _name = "{{ wizard.name }}"
+    _description = "{{ wizard.name | replace('.', ' ') | title }}"
+    _transient_max_hours = 1.0
+
+    days_threshold = fields.Integer(
+        string="Archive records older than (days)",
+        default=365,
+        required=True,
+    )
+
+    def action_archive(self):
+        self.ensure_one()
+        cutoff = fields.Date.today() - relativedelta(days=self.days_threshold)
+        records = self.env['{{ wizard.target_model }}'].search([
+            ('active', '=', True),
+            ('create_date', '<', cutoff),
+        ])
+        records.write({'active': False})
+        return {'type': 'ir.actions.act_window_close'}

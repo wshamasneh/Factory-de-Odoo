@@ -1,0 +1,80 @@
+{# readme.rst.j2 -- OCA-format README.rst for the module #}
+{% set title_underline = '=' * module_title | length %}
+{{ title_underline }}
+{{ module_title }}
+{{ title_underline }}
+
+{{ summary }}
+
+**Table of Contents**
+
+.. contents::
+   :local:
+
+Description
+===========
+
+{{ summary }}
+
+This module provides the following models:
+
+{% for model in models %}
+* **{{ model.description | default(model.name) }}** (``{{ model.name }}``)
+{% endfor %}
+
+Installation
+============
+
+This module depends on the following Odoo modules:
+
+{% for dep in depends %}
+* ``{{ dep }}``
+{% endfor %}
+
+No additional Python dependencies are required beyond what Odoo provides.
+
+Configuration
+=============
+
+After installation:
+
+1. Go to **Settings > Users & Companies > Users**
+2. Assign the appropriate security group:
+   - **{{ module_title }} / User**: Standard access (create, read, write)
+   - **{{ module_title }} / Manager**: Full access including delete
+
+Usage
+=====
+
+{% if application %}
+1. Navigate to the **{{ module_title }}** menu in the main navigation bar
+{% else %}
+1. Navigate to the module through the appropriate menu
+{% endif %}
+2. Use the list view to browse existing records
+3. Click "New" to create a new record
+4. Fill in the required fields and save
+
+Bug Tracker
+===========
+
+Bugs are tracked on `GitHub Issues <https://github.com/AUTHOR/{{ module_name }}/issues>`_.
+In case of trouble, please check there if your issue has already been reported.
+
+Credits
+=======
+
+Authors
+-------
+
+* {{ author }}
+
+Contributors
+------------
+
+* {{ author }}
+
+Maintainers
+-----------
+
+This module is maintained by {{ author }}.

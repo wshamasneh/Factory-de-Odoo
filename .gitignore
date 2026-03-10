@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+*.pyc
+__pycache__/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test/cache
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Planning state (project-specific, not tracked in combined repo)
+.planning/phases/*/RESEARCH.md
+.planning/phases/*/VERIFICATION.md
+
+# Docker volumes
+pgdata/
+
+# Logs
+*.log

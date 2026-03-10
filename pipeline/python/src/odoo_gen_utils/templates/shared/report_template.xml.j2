@@ -1,0 +1,90 @@
+{# report_template.xml.j2 -- QWeb report body template for PDF generation #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_{{ report.xml_id }}">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2><span t-field="doc.display_name"/></h2>
+{% if report.get('subtitle') %}
+                        <p class="text-muted"><small>{{ report.subtitle }}</small></p>
+{% endif %}
+{% if report.get('header_fields') %}
+                        <div class="row mb-3">
+{% for hf in report.header_fields %}
+                            <div class="col-{{ hf.col_size | default(4) }}">
+                                <strong>{{ hf.label }}:</strong>
+                                <span t-field="doc.{{ hf.field }}"/>
+                            </div>
+{% endfor %}
+                        </div>
+{% endif %}
+{% if report.get('columns') %}
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+{% for col in report.columns %}
+                                    <th{% if col.get('align') %} class="text-{{ col.align }}"{% endif %}>{{ col.label }}</th>
+{% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+{% if report.get('detail_field') %}
+                                <tr t-foreach="doc.{{ report.detail_field }}" t-as="line">
+{% for col in report.columns %}
+                                    <td{% if col.get('align') %} class="text-{{ col.align }}"{% endif %}><span t-field="line.{{ col.field }}"{% if col.get('widget') %} t-options='{"widget": "{{ col.widget }}"}'{% endif %}/></td>
+{% endfor %}
+                                </tr>
+{% else %}
+{% for col in report.columns %}
+                                <tr>
+                                    <td style="font-weight: bold;">{{ col.label }}</td>
+                                    <td><span t-field="doc.{{ col.field }}"{% if col.get('widget') %} t-options='{"widget": "{{ col.widget }}"}'{% endif %}/></td>
+                                </tr>
+{% endfor %}
+{% endif %}
+                            </tbody>
+{% if report.get('totals') %}
+                            <tfoot>
+                                <tr>
+{% for col in report.columns %}
+{% if col.field in report.totals %}
+                                    <td class="text-end"><strong><span t-field="doc.{{ report.totals[col.field] }}"/></strong></td>
+{% elif loop.first %}
+                                    <td><strong>Total</strong></td>
+{% else %}
+                                    <td/>
+{% endif %}
+{% endfor %}
+                                </tr>
+                            </tfoot>
+{% endif %}
+                        </table>
+{% else %}
+{# Fallback: auto-render visible fields as key-value pairs #}
+                        <table class="table table-sm">
+                            <tbody>
+{% for field in report.get('fields', []) %}
+                                <tr>
+                                    <td style="font-weight: bold; width: 30%;">{{ field.label | default(field.name | replace('_', ' ') | title) }}</td>
+                                    <td><span t-field="doc.{{ field.name }}"/></td>
+                                </tr>
+{% endfor %}
+                            </tbody>
+                        </table>
+{% endif %}
+{% if report.get('footer_text') %}
+                        <div class="mt-4">
+                            <p class="text-muted"><small>{{ report.footer_text }}</small></p>
+                        </div>
+{% endif %}
+                        <div t-if="not doc_last" style="page-break-after: always;"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

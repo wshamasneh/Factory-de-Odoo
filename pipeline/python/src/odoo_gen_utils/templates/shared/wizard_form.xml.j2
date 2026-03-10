@@ -1,0 +1,35 @@
+{# wizard_form.xml.j2 -- Odoo wizard dialog form view and action #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Wizard Form View -->
+    <record id="view_{{ wizard_xml_id | default(wizard.name | to_xml_id) }}_form" model="ir.ui.view">
+        <field name="name">{{ wizard.name }}.view.form</field>
+        <field name="model">{{ wizard.name }}</field>
+        <field name="arch" type="xml">
+            <form string="{{ wizard.name | replace('.', ' ') | title }}">
+                <group>
+{% for field in wizard.fields %}
+                    <field name="{{ field.name }}"/>
+{% endfor %}
+                </group>
+                <footer>
+                    <button name="button_confirm"
+                            string="Confirm"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard Action -->
+    <record id="action_{{ wizard_xml_id | default(wizard.name | to_xml_id) }}" model="ir.actions.act_window">
+        <field name="name">{{ wizard.name | replace('.', ' ') | title }}</field>
+        <field name="res_model">{{ wizard.name }}</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

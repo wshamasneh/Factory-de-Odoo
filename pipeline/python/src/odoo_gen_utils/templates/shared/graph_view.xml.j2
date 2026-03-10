@@ -1,0 +1,25 @@
+{# graph_view.xml.j2 -- Graph view for analytics dashboard #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_{{ model_xml_id }}_graph" model="ir.ui.view">
+        <field name="name">{{ dashboard.model_name }}.view.graph</field>
+        <field name="model">{{ dashboard.model_name }}</field>
+        <field name="arch" type="xml">
+            <graph string="{{ dashboard.title | default(model_xml_id | replace('_', ' ') | title + ' Analysis') }}"
+                   type="{{ dashboard.chart_type | default('bar') }}"
+{% if dashboard.get('stacked') %}
+                   stacked="True"
+{% endif %}
+            >
+{% for dim in dashboard.dimensions %}
+                <field name="{{ dim.field }}"{% if dim.get('interval') %} interval="{{ dim.interval }}"{% endif %}/>
+{% endfor %}
+{% for measure in dashboard.measures %}
+                <field name="{{ measure.field }}" type="measure"/>
+{% endfor %}
+            </graph>
+        </field>
+    </record>
+
+</odoo>

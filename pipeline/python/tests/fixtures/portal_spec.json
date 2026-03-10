@@ -1,0 +1,111 @@
+{
+  "module_name": "uni_student_portal",
+  "depends": ["portal", "uni_student", "uni_fee", "uni_enrollment"],
+  "models": [
+    {
+      "name": "uni.student",
+      "description": "University Student",
+      "fields": [
+        {"name": "name", "type": "Char", "string": "Name", "required": true},
+        {"name": "cnic", "type": "Char", "string": "CNIC"},
+        {"name": "user_id", "type": "Many2one", "comodel_name": "res.users", "string": "Portal User"},
+        {"name": "program_id", "type": "Many2one", "comodel_name": "academic.program", "string": "Program"},
+        {"name": "department_id", "type": "Many2one", "comodel_name": "hr.department", "string": "Department"},
+        {"name": "cgpa", "type": "Float", "string": "CGPA"},
+        {"name": "enrollment_status", "type": "Selection", "string": "Enrollment Status", "selection": [["enrolled", "Enrolled"], ["graduated", "Graduated"], ["withdrawn", "Withdrawn"]]},
+        {"name": "semester", "type": "Integer", "string": "Semester"},
+        {"name": "phone", "type": "Char", "string": "Phone"},
+        {"name": "email", "type": "Char", "string": "Email"},
+        {"name": "address", "type": "Text", "string": "Address"}
+      ]
+    },
+    {
+      "name": "uni.enrollment",
+      "description": "Student Enrollment",
+      "fields": [
+        {"name": "student_id", "type": "Many2one", "comodel_name": "uni.student", "string": "Student", "required": true},
+        {"name": "course_id", "type": "Many2one", "comodel_name": "academic.course", "string": "Course", "required": true},
+        {"name": "term_id", "type": "Many2one", "comodel_name": "academic.term", "string": "Term"},
+        {"name": "section", "type": "Char", "string": "Section"},
+        {"name": "state", "type": "Selection", "string": "Status", "selection": [["draft", "Draft"], ["confirmed", "Confirmed"], ["done", "Done"]]},
+        {"name": "grade", "type": "Char", "string": "Grade"},
+        {"name": "grade_point", "type": "Float", "string": "Grade Point"},
+        {"name": "attendance_percentage", "type": "Float", "string": "Attendance %"}
+      ]
+    }
+  ],
+  "portal": {
+    "pages": [
+      {
+        "id": "student_profile",
+        "type": "detail",
+        "model": "uni.student",
+        "route": "/my/profile",
+        "title": "My Profile",
+        "ownership": "user_id",
+        "fields_visible": ["name", "cnic", "program_id", "department_id", "cgpa", "enrollment_status", "semester"],
+        "fields_editable": ["phone", "email", "address"],
+        "show_in_home": true,
+        "home_icon": "fa fa-user",
+        "home_counter": false
+      },
+      {
+        "id": "student_enrollments",
+        "type": "list",
+        "model": "uni.enrollment",
+        "route": "/my/enrollments",
+        "title": "My Enrollments",
+        "ownership": "student_id.user_id",
+        "list_fields": ["course_id", "term_id", "state", "grade"],
+        "detail_route": "/my/enrollment/<int:enrollment_id>",
+        "detail_fields": ["course_id", "term_id", "section", "state", "grade", "grade_point", "attendance_percentage"],
+        "filters": [
+          {"field": "term_id", "label": "Term"},
+          {"field": "state", "label": "Status"}
+        ],
+        "default_sort": "term_id desc",
+        "show_in_home": true,
+        "home_icon": "fa fa-book",
+        "home_counter": true
+      },
+      {
+        "id": "student_fees",
+        "type": "list",
+        "model": "fee.invoice",
+        "route": "/my/fees",
+        "title": "My Fees",
+        "ownership": "student_id.user_id",
+        "list_fields": ["name", "amount", "due_date", "state", "amount_paid"],
+        "detail_route": "/my/fee/<int:invoice_id>",
+        "detail_fields": ["name", "amount", "penalty_amount", "total_amount", "due_date", "state", "amount_paid", "balance"],
+        "detail_actions": [
+          {
+            "name": "download_challan",
+            "label": "Download Challan",
+            "type": "report",
+            "report_ref": "uni_fee.report_fee_challan",
+            "states": ["confirmed", "overdue"]
+          }
+        ],
+        "show_in_home": true,
+        "home_icon": "fa fa-money",
+        "home_counter": true,
+        "counter_domain": [["state", "in", ["confirmed", "overdue"]]]
+      },
+      {
+        "id": "student_results",
+        "type": "list",
+        "model": "exam.result",
+        "route": "/my/results",
+        "title": "My Results",
+        "ownership": "student_id.user_id",
+        "list_fields": ["course_id", "exam_type", "marks", "grade", "term_id"],
+        "show_in_home": true,
+        "home_icon": "fa fa-graduation-cap",
+        "home_counter": false
+      }
+    ],
+    "auth": "portal",
+    "menu_label": "Student Portal"
+  }
+}

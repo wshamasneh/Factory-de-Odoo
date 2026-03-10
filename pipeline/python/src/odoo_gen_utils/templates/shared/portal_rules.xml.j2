@@ -1,0 +1,30 @@
+{# portal_rules.xml.j2 -- Portal record rules with base.group_portal #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+{% for model_info in portal_models %}
+        <record id="rule_portal_{{ model_info.model_var }}_read" model="ir.rule">
+            <field name="name">Portal: Read Own {{ model_info.model_class }}</field>
+            <field name="model_id" ref="{{ module_name }}.{{ model_info.model | model_ref }}"/>
+            <field name="domain_force">[('{{ model_info.ownership }}', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+{% endfor %}
+{% for model_info in portal_models if model_info.model_var in editable_models or model_info.model in editable_models %}
+        <record id="rule_portal_{{ model_info.model_var }}_write" model="ir.rule">
+            <field name="name">Portal: Write Own {{ model_info.model_class }}</field>
+            <field name="model_id" ref="{{ module_name }}.{{ model_info.model | model_ref }}"/>
+            <field name="domain_force">[('{{ model_info.ownership }}', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="False"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+{% endfor %}
+    </data>
+</odoo>

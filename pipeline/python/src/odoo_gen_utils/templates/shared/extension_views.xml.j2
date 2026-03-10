@@ -1,0 +1,45 @@
+{# extension_views.xml.j2 -- xpath view inheritance for extension modules (Phase 59) #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+{% for view in views %}
+    <record id="{{ view.view_record_id }}" model="ir.ui.view">
+        <field name="name">{{ view.view_name }}</field>
+        <field name="model">{{ view.model_name }}</field>
+        <field name="inherit_id" ref="{{ view.inherit_id_ref }}"/>
+        <field name="arch" type="xml">
+{% for ins in view.insertions %}
+            <xpath expr="{{ ins.xpath }}" position="{{ ins.position }}">
+{% if ins.content == 'page' %}
+                <page string="{{ ins.page_string }}" name="{{ ins.page_name }}">
+{% if ins.fields | length >= 4 %}
+                    <group>
+                        <group>
+{% for f in ins.fields[:ins.fields|length // 2 + ins.fields|length % 2] %}
+                            <field name="{{ f }}"/>
+{% endfor %}
+                        </group>
+                        <group>
+{% for f in ins.fields[ins.fields|length // 2 + ins.fields|length % 2:] %}
+                            <field name="{{ f }}"/>
+{% endfor %}
+                        </group>
+                    </group>
+{% else %}
+                    <group>
+{% for f in ins.fields %}
+                        <field name="{{ f }}"/>
+{% endfor %}
+                    </group>
+{% endif %}
+                </page>
+{% else %}
+{% for f in ins.fields %}
+                <field name="{{ f }}"/>
+{% endfor %}
+{% endif %}
+            </xpath>
+{% endfor %}
+        </field>
+    </record>
+{% endfor %}
+</odoo>

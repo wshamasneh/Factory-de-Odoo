@@ -1,0 +1,202 @@
+[
+  {
+    "id": "field-not-found",
+    "regex": "KeyError:\\s*['\"]([^'\"]+)['\"]",
+    "context_regex": null,
+    "explanation": "Field referenced in code or view does not exist on the model. A KeyError for a field name typically means the field is used in Python code or a view but was never defined in the model class.",
+    "suggestion": "Check the field name for typos. Ensure the field is defined in the model's Python class. If inherited, verify the parent module is in 'depends'.",
+    "severity": "error"
+  },
+  {
+    "id": "model-not-found",
+    "regex": "(?:KeyError|ValueError|MissingError).*(?:Model|model).*(?:does not exist|not found|unknown)",
+    "context_regex": null,
+    "explanation": "A referenced model does not exist in the Odoo registry. This happens when code references a model that is not installed or has a typo in the technical name.",
+    "suggestion": "Verify the model's technical name (e.g., 'sale.order'). Ensure the module defining the model is listed in 'depends' in __manifest__.py.",
+    "severity": "error"
+  },
+  {
+    "id": "field-type-mismatch",
+    "regex": "(?:TypeError|ValueError).*(?:expected|invalid literal|cannot convert|wrong type).*(?:field|column)",
+    "context_regex": null,
+    "explanation": "A field operation received a value of the wrong type. For example, passing a string to an Integer field or a single record to a Many2many field without the proper command tuple.",
+    "suggestion": "Check the field type definition and ensure values match. For relational fields, use Command.set(), Command.link(), etc. instead of raw IDs.",
+    "severity": "error"
+  },
+  {
+    "id": "missing-required-field",
+    "regex": "(?:IntegrityError|ValidationError).*(?:null value|NOT NULL|required field|violates not-null)",
+    "context_regex": null,
+    "explanation": "A required field was not provided during record creation or update. The database or Odoo's ORM rejected the operation because a mandatory value is missing.",
+    "suggestion": "Provide a value for the required field in default values, in the create/write call, or add required=True with a default in the field definition.",
+    "severity": "error"
+  },
+  {
+    "id": "duplicate-field",
+    "regex": "(?:column|field).*(?:already exists|defined twice|duplicate)",
+    "context_regex": null,
+    "explanation": "A field is defined more than once in the same model class. This can happen with multiple inheritance or copy-paste errors.",
+    "suggestion": "Remove the duplicate field definition. If extending an inherited field, use the same name without redefining the type.",
+    "severity": "error"
+  },
+  {
+    "id": "invalid-field-definition",
+    "regex": "(?:TypeError|AttributeError).*(?:fields\\.|Field).*(?:unexpected keyword|invalid|not a valid)",
+    "context_regex": null,
+    "explanation": "A field declaration has invalid parameters. This can be caused by using deprecated attributes, misspelled parameters, or wrong value types in field kwargs.",
+    "suggestion": "Check the Odoo 17.0 field documentation for valid parameters. Common issues: 'track_visibility' renamed to 'tracking', 'states' attribute deprecated.",
+    "severity": "error"
+  },
+  {
+    "id": "missing-compute-method",
+    "regex": "(?:AttributeError|ValueError).*(?:compute|_compute_).*(?:not found|has no attribute|does not exist|undefined)",
+    "context_regex": null,
+    "explanation": "A computed field references a compute method that does not exist on the model. The method name in compute='...' must match an existing method.",
+    "suggestion": "Define the compute method on the model class. Ensure the method name matches exactly (including the _compute_ prefix convention).",
+    "severity": "error"
+  },
+  {
+    "id": "missing-inverse-method",
+    "regex": "(?:AttributeError|ValueError).*(?:inverse|_inverse_).*(?:not found|has no attribute|does not exist|undefined)",
+    "context_regex": null,
+    "explanation": "A computed field with an inverse references a method that does not exist. The inverse method is needed to make the computed field editable.",
+    "suggestion": "Define the inverse method on the model class, or remove the inverse parameter if the field should be read-only.",
+    "severity": "error"
+  },
+  {
+    "id": "xml-parse-error",
+    "regex": "(?:ParseError|XMLSyntaxError|lxml\\.etree\\.XMLSyntaxError)",
+    "context_regex": null,
+    "explanation": "An XML file has syntax errors. This can be a mismatched tag, unclosed element, invalid attribute, or encoding issue in a view, data, or security file.",
+    "suggestion": "Check the XML file for mismatched opening/closing tags, proper quoting of attributes, and valid XML structure. Use an XML validator or IDE plugin.",
+    "severity": "error"
+  },
+  {
+    "id": "view-field-not-found",
+    "regex": "(?:ValueError|Field).*(?:does not exist|unknown field|not found).*(?:view|arch)",
+    "context_regex": "(?:<field|<tree|<form|<list|<kanban)",
+    "explanation": "A field referenced in an XML view definition does not exist on the target model. The view architecture references a field name that is not defined.",
+    "suggestion": "Check the field name in the view XML. Ensure it matches a field defined in the Python model. If inherited, verify the parent module is in 'depends'.",
+    "severity": "error"
+  },
+  {
+    "id": "invalid-view-arch",
+    "regex": "(?:Invalid view|invalid arch|View error|ValidationError).*(?:arch|architecture|view)",
+    "context_regex": null,
+    "explanation": "The view architecture is invalid. This can be caused by incorrect XML structure, referencing nonexistent fields, or violating Odoo view constraints.",
+    "suggestion": "Validate the view XML structure. Ensure form views have <sheet>, tree views use valid column types, and all referenced fields exist on the model.",
+    "severity": "error"
+  },
+  {
+    "id": "duplicate-xml-id",
+    "regex": "(?:duplicate|already exists).*(?:xml_id|xmlid|external.id|ir\\.model\\.data)",
+    "context_regex": null,
+    "explanation": "Two records share the same XML ID (external identifier). Each XML ID must be unique within a module's data files.",
+    "suggestion": "Rename one of the duplicate XML IDs. Convention: use module_name.descriptive_name (e.g., my_module.view_sale_order_form).",
+    "severity": "error"
+  },
+  {
+    "id": "missing-action-reference",
+    "regex": "(?:ValueError|MissingError).*(?:action|act_window).*(?:does not exist|not found|External ID not found)",
+    "context_regex": null,
+    "explanation": "A menu item or button references an action (ir.actions.act_window) that does not exist. The XML ID used in the reference could not be resolved.",
+    "suggestion": "Check the action XML ID for typos. Ensure the action is defined in a data file that is listed in __manifest__.py 'data' key.",
+    "severity": "error"
+  },
+  {
+    "id": "access-denied",
+    "regex": "AccessError|access\\.?denied|not allowed to access|You are not allowed",
+    "context_regex": null,
+    "explanation": "An access control error occurred. The current user does not have permission to perform the requested operation on the model.",
+    "suggestion": "Add or fix ir.model.access.csv entries for the model. Ensure the ACL grants read/write/create/unlink as needed for the user's group.",
+    "severity": "error"
+  },
+  {
+    "id": "missing-acl",
+    "regex": "(?:no access rule|ir\\.model\\.access|Access Rights).*(?:missing|not found|no rule)",
+    "context_regex": null,
+    "explanation": "No access control list (ACL) entry exists for a model. Every model must have at least one ir.model.access.csv entry to be accessible.",
+    "suggestion": "Add a line to security/ir.model.access.csv granting access. Format: id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink",
+    "severity": "error"
+  },
+  {
+    "id": "invalid-csv-format",
+    "regex": "(?:ir\\.model\\.access|security).*(?:malformed|invalid|CSV|parse error|format error)",
+    "context_regex": null,
+    "explanation": "The ir.model.access.csv file has formatting issues. Common problems: wrong number of columns, missing header, incorrect model references.",
+    "suggestion": "Ensure CSV has 8 columns: id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink. Use model_model_name format for model_id:id.",
+    "severity": "error"
+  },
+  {
+    "id": "module-not-found",
+    "regex": "(?:No module named|ModuleNotFoundError|ImportError.*module)",
+    "context_regex": null,
+    "explanation": "A Python module or Odoo addon could not be imported. This usually means a dependency is not installed or the module name has a typo.",
+    "suggestion": "Check the module name for typos. Ensure all dependencies are listed in __manifest__.py 'depends' and in requirements.txt for Python libraries.",
+    "severity": "error"
+  },
+  {
+    "id": "import-error",
+    "regex": "ImportError:\\s+cannot import name|ImportError:\\s+No module named",
+    "context_regex": null,
+    "explanation": "A specific name could not be imported from a module. This can indicate a renamed class, removed function, or circular import.",
+    "suggestion": "Verify the import path and name. Check if the target was renamed or moved in Odoo 17.0. Ensure no circular imports between modules.",
+    "severity": "error"
+  },
+  {
+    "id": "circular-dependency",
+    "regex": "(?:circular|cyclic).*(?:dependency|import|reference)",
+    "context_regex": null,
+    "explanation": "Two or more modules depend on each other in a cycle. Odoo cannot resolve the dependency order, preventing proper module loading.",
+    "suggestion": "Break the cycle by extracting shared functionality into a third module, or use lazy imports. Review the 'depends' list in each module's __manifest__.py.",
+    "severity": "error"
+  },
+  {
+    "id": "deprecated-attrs",
+    "regex": "(?:attrs\\s*=\\s*[\"']\\{|deprecated.*attrs|attrs.*deprecated)",
+    "context_regex": null,
+    "explanation": "The 'attrs' attribute in XML views is deprecated in Odoo 17.0. Odoo 17 uses inline Python expressions directly on field/element attributes instead.",
+    "suggestion": "Replace attrs=\"{'invisible': [('field', '=', value)]}\" with invisible=\"field == value\" directly on the element. Same for readonly and required.",
+    "severity": "warning"
+  },
+  {
+    "id": "deprecated-tree-tag",
+    "regex": "(?:deprecated.*<tree>|<tree\\s*>|<tree\\s+|tag.*tree.*deprecated|tree.*tag.*deprecated)",
+    "context_regex": null,
+    "explanation": "The <tree> tag is deprecated in Odoo 17.0 views. Use <list> instead for list/tree views.",
+    "suggestion": "Replace <tree> with <list> and </tree> with </list> in all view XML files. The functionality is identical.",
+    "severity": "warning"
+  },
+  {
+    "id": "deprecated-api-one",
+    "regex": "(?:api\\.one|@api\\.one|has no attribute 'one')",
+    "context_regex": null,
+    "explanation": "The @api.one decorator was removed in Odoo 17.0. It was already deprecated since Odoo 13.0. Methods decorated with @api.one received a single record.",
+    "suggestion": "Remove @api.one. Iterate over self manually: for record in self: ... Or use @api.depends for computed fields, @api.model for class-level methods.",
+    "severity": "warning"
+  },
+  {
+    "id": "deprecated-openerp-import",
+    "regex": "(?:from\\s+openerp\\b|import\\s+openerp\\b)",
+    "context_regex": null,
+    "explanation": "Importing from 'openerp' instead of 'odoo'. The openerp namespace was renamed to odoo in version 10.0 and is not available in Odoo 17.0.",
+    "suggestion": "Replace 'from openerp' with 'from odoo' in all Python files. Example: 'from openerp import models' -> 'from odoo import models'.",
+    "severity": "warning"
+  },
+  {
+    "id": "constraint-violation",
+    "regex": "(?:ValidationError|IntegrityError|check constraint|unique constraint|_sql_constraints).*(?:violated|failed|duplicate key|already exists)",
+    "context_regex": null,
+    "explanation": "A SQL or Python constraint failed during a database operation. This means the data being written violates a business rule or database constraint.",
+    "suggestion": "Check _sql_constraints and @api.constrains methods on the model. Ensure test data respects unique constraints and business validation rules.",
+    "severity": "error"
+  },
+  {
+    "id": "database-error",
+    "regex": "(?:psycopg2\\.(?:Error|OperationalError|ProgrammingError|IntegrityError)|relation.*does not exist|column.*does not exist|permission denied for)",
+    "context_regex": null,
+    "explanation": "A PostgreSQL database error occurred. This can indicate missing tables/columns (module not properly installed), connection issues, or SQL errors.",
+    "suggestion": "Run module upgrade (-u) to apply pending schema changes. Check for raw SQL queries with wrong table/column names. Verify database permissions.",
+    "severity": "error"
+  }
+]

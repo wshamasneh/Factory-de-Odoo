@@ -1,0 +1,29 @@
+{# bulk_wizard_line.py.j2 -- Bulk wizard line TransientModel for preview records #}
+from odoo import fields, models
+
+
+class {{ op.source_model_class }}Bulk{{ op.id | replace('bulk_', '') | title | replace('_', '') }}WizardLine(models.TransientModel):
+    _name = '{{ op.wizard_model }}.line'
+    _description = '{{ op.name }} Preview Line'
+
+    wizard_id = fields.Many2one(
+        '{{ op.wizard_model }}',
+        string='Wizard',
+        required=True,
+        ondelete='cascade',
+    )
+    source_id = fields.Many2one(
+        '{{ op.source_model }}',
+        string='Source Record',
+    )
+{% for field_name in op.get('preview_fields', []) %}
+    {{ field_name }} = fields.Char(
+        string='{{ field_name | replace("_", " ") | title }}',
+        related='source_id.{{ field_name }}',
+        readonly=True,
+    )
+{% endfor %}
+    selected = fields.Boolean(
+        string='Selected',
+        default=True,
+    )

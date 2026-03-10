@@ -1,0 +1,87 @@
+{
+  "module_name": "uni_student_hr",
+  "module_title": "University Student HR",
+  "depends": ["uni_core"],
+  "summary": "Extend HR for university academic staff",
+  "author": "Test Author",
+  "extends": [
+    {
+      "base_model": "hr.employee",
+      "base_module": "hr",
+      "add_fields": [
+        {"name": "faculty_id", "type": "Char", "string": "Faculty ID"},
+        {"name": "department_academic_id", "type": "Many2one", "comodel": "hr.department", "string": "Academic Department"},
+        {"name": "designation", "type": "Selection", "values": [
+          ["professor", "Professor"],
+          ["associate_professor", "Associate Professor"],
+          ["assistant_professor", "Assistant Professor"],
+          ["lecturer", "Lecturer"],
+          ["lab_instructor", "Lab Instructor"]
+        ]},
+        {"name": "hec_registration", "type": "Char"},
+        {"name": "course_ids", "type": "Many2many", "comodel": "uni.course"}
+      ],
+      "add_computed": [
+        {
+          "name": "current_course_count",
+          "type": "Integer",
+          "compute": "_compute_current_course_count",
+          "depends": ["course_ids"],
+          "store": true
+        }
+      ],
+      "add_constraints": [
+        {
+          "name": "_check_faculty_id",
+          "fields": ["faculty_id"],
+          "rule": "Faculty ID must be unique",
+          "type": "unique"
+        }
+      ],
+      "add_methods": [
+        {
+          "name": "_compute_current_course_count",
+          "decorator": "@api.depends('course_ids')",
+          "business_rules": ["Count of active courses assigned to faculty"]
+        }
+      ],
+      "view_extensions": [
+        {
+          "base_view": "hr.view_employee_form",
+          "insertions": [
+            {
+              "xpath": "//page[@name='public']",
+              "position": "after",
+              "content": "page",
+              "page_name": "academic",
+              "page_string": "Academic Info",
+              "fields": ["faculty_id", "designation", "hec_registration", "department_academic_id", "course_ids", "current_course_count"]
+            }
+          ]
+        },
+        {
+          "base_view": "hr.view_employee_tree",
+          "insertions": [
+            {
+              "xpath": "//field[@name='department_id']",
+              "position": "after",
+              "fields": ["designation", "faculty_id"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "models": [
+    {
+      "name": "uni.faculty.publication",
+      "description": "Faculty Publication",
+      "fields": [
+        {"name": "employee_id", "type": "Many2one", "comodel_name": "hr.employee", "string": "Employee"},
+        {"name": "title", "type": "Char", "string": "Title"},
+        {"name": "journal", "type": "Char", "string": "Journal"},
+        {"name": "year", "type": "Integer", "string": "Year"}
+      ]
+    }
+  ]
+}

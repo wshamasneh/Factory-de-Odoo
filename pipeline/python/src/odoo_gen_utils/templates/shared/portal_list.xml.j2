@@ -1,0 +1,44 @@
+{# portal_list.xml.j2 -- QWeb list page template with pagination #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_my_{{ page.id }}" name="{{ page.title | default(page.id) }}">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">{{ page.title | default(page.id) }}</t>
+            </t>
+            <t t-if="not {{ page.plural_name }}">
+                <div class="alert alert-info">No {{ page.title | default(page.id) | lower }} found.</div>
+            </t>
+            <t t-if="{{ page.plural_name }}" t-call="portal.portal_table">
+                <thead>
+                    <tr>
+{% for field in page.list_fields | default([]) %}
+                        <th>{{ field }}</th>
+{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="{{ page.plural_name }}" t-as="{{ page.singular_name }}">
+                        <tr>
+{% for field in page.list_fields | default([]) %}
+{% if loop.first and page.detail_route is defined and page.detail_route %}
+                            <td>
+                                <a t-attf-href="/my/{{ page.singular_name }}/#{{'{'}}{{ page.singular_name }}.id{{'}'}}">
+                                    <t t-out="{{ page.singular_name }}.{{ field }}.display_name if hasattr({{ page.singular_name }}.{{ field }}, 'display_name') else {{ page.singular_name }}.{{ field }}"/>
+                                </a>
+                            </td>
+{% else %}
+                            <td><t t-out="{{ page.singular_name }}.{{ field }}{% if field.endswith('_id') %}.display_name{% endif %}"/></td>
+{% endif %}
+{% endfor %}
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+            <div t-if="pager" class="o_portal_pager text-center">
+                <t t-call="portal.pager"/>
+            </div>
+        </t>
+    </template>
+</odoo>

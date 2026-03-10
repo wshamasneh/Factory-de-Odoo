@@ -1,0 +1,30 @@
+{# report_action.xml.j2 -- ir.actions.report + optional paper format #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="report_{{ module_name }}_{{ report.xml_id }}" model="ir.actions.report">
+        <field name="name">{{ report.name }}</field>
+        <field name="model">{{ report.model_name }}</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">{{ module_name }}.report_{{ report.xml_id }}</field>
+        <field name="binding_model_id" ref="model_{{ report.model_name | to_xml_id }}"/>
+        <field name="binding_type">report</field>
+{% if report.get('paper_format') %}
+        <field name="paperformat_id" ref="{{ module_name }}.paperformat_{{ report.xml_id }}"/>
+{% endif %}
+    </record>
+
+{% if report.get('paper_format') %}
+    <record id="paperformat_{{ report.xml_id }}" model="report.paperformat">
+        <field name="name">{{ report.name }} Format</field>
+        <field name="format">{{ report.paper_format.format | default('A4') }}</field>
+        <field name="orientation">{{ report.paper_format.orientation | default('Portrait') }}</field>
+        <field name="margin_top">{{ report.paper_format.margin_top | default(20) }}</field>
+        <field name="margin_bottom">{{ report.paper_format.margin_bottom | default(20) }}</field>
+        <field name="margin_left">{{ report.paper_format.margin_left | default(7) }}</field>
+        <field name="margin_right">{{ report.paper_format.margin_right | default(7) }}</field>
+        <field name="header_spacing">{{ report.paper_format.header_spacing | default(35) }}</field>
+    </record>
+{% endif %}
+
+</odoo>

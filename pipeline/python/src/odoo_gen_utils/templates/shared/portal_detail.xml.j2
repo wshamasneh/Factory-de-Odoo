@@ -1,0 +1,55 @@
+{# portal_detail.xml.j2 -- QWeb detail page template with card layout #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+{% set record_var = page.singular_name %}
+{% set detail_fields = page.detail_fields | default([]) %}
+{% set list_route = page.route if page.type == "detail" else page.route %}
+    <template id="portal_{{ page.id }}_detail" name="{{ page.title | default(page.id) }} Detail">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">{{ page.title | default(page.id) }}</t>
+            </t>
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-body">
+{% for field in detail_fields %}
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">{{ field }}</div>
+                                <div class="col-8" t-field="{{ record_var }}.{{ field }}"/>
+                            </div>
+{% endfor %}
+                        </div>
+                    </div>
+                    <a t-attf-href="{{ list_route }}" class="btn btn-secondary mt-3">Back</a>
+                </div>
+                <div class="col-lg-4">
+{% if page.detail_actions is defined and page.detail_actions %}
+                    <div class="card">
+                        <div class="card-body">
+                            <h5>Actions</h5>
+{% for action in page.detail_actions %}
+{% if action.type == "report" %}
+{% if action.states %}
+                            <a t-if="{{ record_var }}.state in {{ action.states }}"
+                               t-attf-href="{{ page.detail_route | replace('<int:' ~ page.singular_name ~ '_id>', '#{' ~ record_var ~ '.id}') }}/{{ action.name }}"
+                               class="btn btn-primary d-block mb-2">
+                                {{ action.label | default(action.name) }}
+                            </a>
+{% else %}
+                            <a t-attf-href="{{ page.detail_route | replace('<int:' ~ page.singular_name ~ '_id>', '#{' ~ record_var ~ '.id}') }}/{{ action.name }}"
+                               class="btn btn-primary d-block mb-2">
+                                {{ action.label | default(action.name) }}
+                            </a>
+{% endif %}
+{% endif %}
+{% endfor %}
+                        </div>
+                    </div>
+{% endif %}
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

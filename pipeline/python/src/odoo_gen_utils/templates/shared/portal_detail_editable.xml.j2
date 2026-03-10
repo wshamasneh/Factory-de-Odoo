@@ -1,0 +1,49 @@
+{# portal_detail_editable.xml.j2 -- QWeb editable detail page with form and CSRF #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+{% set record_var = page.singular_name %}
+{% set visible = page.fields_visible | default([]) %}
+{% set editable = page.fields_editable | default([]) %}
+{% set readonly = [] %}
+{% for f in visible %}
+{% if f not in editable %}
+{% if readonly.append(f) %}{% endif %}
+{% endif %}
+{% endfor %}
+    <template id="portal_my_{{ page.id }}" name="{{ page.title | default(page.id) }}">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">{{ page.title | default(page.id) }}</t>
+            </t>
+            <div class="card">
+                <div class="card-body">
+{% if readonly %}
+                    <!-- Read-only fields -->
+{% for field in readonly %}
+                    <div class="row mb-2">
+                        <div class="col-4 fw-bold">{{ field }}</div>
+                        <div class="col-8" t-field="{{ record_var }}.{{ field }}"/>
+                    </div>
+{% endfor %}
+{% endif %}
+                    <!-- Editable fields -->
+                    <form method="POST" t-attf-action="{{ page.route }}">
+                        <input type="hidden" name="csrf_token"
+                               t-att-value="request.csrf_token()"/>
+{% for field in editable %}
+                        <div class="row mb-2">
+                            <label class="col-4 fw-bold" for="{{ field }}">{{ field }}</label>
+                            <div class="col-8">
+                                <input type="text" name="{{ field }}" class="form-control"
+                                       t-att-value="{{ record_var }}.{{ field }}"/>
+                            </div>
+                        </div>
+{% endfor %}
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </form>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

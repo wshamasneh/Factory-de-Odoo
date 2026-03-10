@@ -1,0 +1,26 @@
+{# pivot_view.xml.j2 -- Pivot view for analytics dashboard #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_{{ model_xml_id }}_pivot" model="ir.ui.view">
+        <field name="name">{{ dashboard.model_name }}.view.pivot</field>
+        <field name="model">{{ dashboard.model_name }}</field>
+        <field name="arch" type="xml">
+            <pivot string="{{ dashboard.title | default(model_xml_id | replace('_', ' ') | title + ' Analysis') }}"
+                   disable_linking="True"
+                   sample="1"
+            >
+{% for row in dashboard.rows %}
+                <field name="{{ row.field }}" type="row"{% if row.get('interval') %} interval="{{ row.interval }}"{% endif %}/>
+{% endfor %}
+{% for col in dashboard.columns %}
+                <field name="{{ col.field }}" type="col"{% if col.get('interval') %} interval="{{ col.interval }}"{% endif %}/>
+{% endfor %}
+{% for measure in dashboard.measures %}
+                <field name="{{ measure.field }}" type="measure"/>
+{% endfor %}
+            </pivot>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,17 @@
+{# access_csv.j2 -- ir.model.access.csv with per-role CRUD permissions #}
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+{% for model in models %}
+{% for acl in model.security_acl %}
+access_{{ model.name | to_python_var }}_{{ acl.role }},{{ model.name }}.{{ acl.role }},{{ model.name | model_ref }},{{ module_technical_name }}.group_{{ module_technical_name }}_{{ acl.role }},{{ acl.perm_read }},{{ acl.perm_write }},{{ acl.perm_create }},{{ acl.perm_unlink }}
+{% endfor %}
+{% endfor %}
+{% for wizard in spec_wizards %}
+{% for role in security_roles %}
+access_{{ wizard.name | to_python_var }}_{{ role.name }},{{ wizard.name }}.{{ role.name }},{{ wizard.name | model_ref }},{{ module_technical_name }}.group_{{ module_technical_name }}_{{ role.name }},1,1,1,1
+{% endfor %}
+{% endfor %}
+{% for wizard in import_export_wizards | default([]) %}
+{% for role in security_roles %}
+access_{{ wizard.name | to_python_var }}_{{ role.name }},{{ wizard.name }}.{{ role.name }},{{ wizard.name | model_ref }},{{ module_technical_name }}.group_{{ module_technical_name }}_{{ role.name }},1,1,1,0
+{% endfor %}
+{% endfor %}

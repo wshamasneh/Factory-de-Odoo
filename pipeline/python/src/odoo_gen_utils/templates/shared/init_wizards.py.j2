@@ -1,0 +1,4 @@
+{# init_wizards.py.j2 -- wizards package init #}
+{% for wizard in spec_wizards %}
+from . import {{ wizard.name | to_python_var }}
+{% endfor %}

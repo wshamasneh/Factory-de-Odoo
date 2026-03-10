@@ -1,0 +1,24 @@
+{# view_cohort.xml.j2 -- Cohort view for retention/lifecycle analysis #}
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_{{ model_xml_id }}_cohort" model="ir.ui.view">
+        <field name="name">{{ dashboard.model_name }}.view.cohort</field>
+        <field name="model">{{ dashboard.model_name }}</field>
+        <field name="arch" type="xml">
+            <cohort string="{{ dashboard.title | default(model_xml_id | replace('_', ' ') | title + ' Cohort') }}"
+                    date_start="{{ dashboard.cohort_date_start }}"
+                    date_stop="{{ dashboard.cohort_date_stop }}"
+                    interval="{{ dashboard.cohort_interval | default('month') }}"
+                    mode="{{ dashboard.cohort_mode | default('churn') }}"
+{% if dashboard.get('cohort_measure') %}
+                    measure="{{ dashboard.cohort_measure }}"
+{% endif %}
+{% if dashboard.get('cohort_timeline') %}
+                    timeline="{{ dashboard.cohort_timeline }}"
+{% endif %}
+            />
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,25 @@
+{# archival_wizard_form.xml.j2 -- Archival wizard form view + action #}
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="{{ wizard_xml_id }}_form" model="ir.ui.view">
+        <field name="name">{{ wizard.name }}.form</field>
+        <field name="model">{{ wizard.name }}</field>
+        <field name="arch" type="xml">
+            <form string="Archive Records">
+                <group>
+                    <field name="days_threshold"/>
+                </group>
+                <footer>
+                    <button name="action_archive" type="object" string="Archive" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_{{ wizard_xml_id }}" model="ir.actions.act_window">
+        <field name="name">Archive Records</field>
+        <field name="res_model">{{ wizard.name }}</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
