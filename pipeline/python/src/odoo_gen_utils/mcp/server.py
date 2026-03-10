@@ -293,6 +293,141 @@ def get_view_arch(model_name: str, view_type: str = "") -> str:
         return _handle_error(exc)
 
 
+@mcp.tool()
+def get_view_inheritance_chain(model_name: str, view_type: str = "form") -> str:
+    """Trace the full view inheritance chain for an Odoo model.
+
+    Queries ir.ui.view to find the base view (inherit_id=False) and all
+    inherited views, sorted by priority. Essential for avoiding XPATH
+    conflicts when multiple modules extend the same view.
+
+    Args:
+        model_name: Technical model name (e.g. 'res.partner').
+        view_type: View type to trace ('form', 'tree', 'kanban', 'search').
+                   Defaults to 'form'.
+
+    Returns:
+        Chain showing base view → inherited views with priority and module.
+    """
+    try:
+        client = _get_client()
+        all_views = client.search_read(
+            "ir.ui.view",
+            [["model", "=", model_name], ["type", "=", view_type]],
+            ["name", "inherit_id", "priority", "arch", "xml_id"],
+        )
+        if not all_views:
+            return f"No {view_type} views found for model '{model_name}'"
+
+        base_views = [v for v in all_views if not v.get("inherit_id")]
+        inherited = [v for v in all_views if v.get("inherit_id")]
+        inherited.sort(key=lambda v: v.get("priority", 16))
+
+        parts = [f"View inheritance chain for {model_name} ({view_type}):"]
+        parts.append(f"Total views: {len(all_views)} ({len(base_views)} base, {len(inherited)} inherited)")
+        parts.append("")
+
+        for bv in base_views:
+            parts.append(f"BASE: {bv['name']} (xml_id: {bv.get('xml_id', 'N/A')}, priority: {bv.get('priority', 16)})")
+
+        parts.append("")
+        for iv in inherited:
+            parent_name = iv["inherit_id"][1] if iv.get("inherit_id") else "unknown"
+            parts.append(
+                f"  INHERITS: {iv['name']} → parent: {parent_name} "
+                f"(priority: {iv.get('priority', 16)}, xml_id: {iv.get('xml_id', 'N/A')})"
+            )
+
+        return "\n".join(parts)
+    except Exception as exc:
+        return _handle_error(exc)
+
+
+@mcp.tool()
+def get_model_relations(model_name: str) -> str:
+    """Get all relational fields pointing to/from an Odoo model.
+
+    Queries ir.model.fields to find:
+    - Outgoing relations: Many2one/One2many/Many2many fields ON this model
+    - Incoming relations: Many2one/One2many/Many2many fields on OTHER models pointing TO this model
+
+    Args:
+        model_name: Technical model name (e.g. 'res.partner').
+
+    Returns:
+        Formatted list of outgoing and incoming relational fields.
+    """
+    try:
+        client = _get_client()
+        relation_types = ["many2one", "one2many", "many2many"]
+
+        outgoing = client.search_read(
+            "ir.model.fields",
+            [["model", "=", model_name], ["ttype", "in", relation_types]],
+            ["name", "ttype", "relation", "field_description"],
+        )
+
+        incoming = client.search_read(
+            "ir.model.fields",
+            [["relation", "=", model_name], ["ttype", "in", relation_types]],
+            ["name", "ttype", "model", "field_description"],
+        )
+
+        parts = [f"Relations for {model_name}:"]
+        parts.append(f"\nOutgoing ({len(outgoing)} fields — this model references others):")
+        if outgoing:
+            for f in outgoing:
+                parts.append(f"  {f['name']} ({f['ttype']}) → {f['relation']}")
+        else:
+            parts.append("  (none)")
+
+        parts.append(f"\nIncoming ({len(incoming)} fields — other models reference this):")
+        if incoming:
+            for f in incoming:
+                parts.append(f"  {f['model']}.{f['name']} ({f['ttype']}) → {model_name}")
+        else:
+            parts.append("  (none)")
+
+        return "\n".join(parts)
+    except Exception as exc:
+        return _handle_error(exc)
+
+
+@mcp.tool()
+def find_field_conflicts(model_name: str, field_name: str) -> str:
+    """Check if a field already exists on an Odoo model (potential conflict).
+
+    Queries ir.model.fields to see if field_name is already defined on
+    model_name by any installed module. Prevents duplicate field definitions
+    across 90+ generated modules.
+
+    Args:
+        model_name: Technical model name (e.g. 'res.partner').
+        field_name: Field name to check (e.g. 'x_custom_score').
+
+    Returns:
+        CONFLICT with details if field exists, CLEAR if not.
+    """
+    try:
+        client = _get_client()
+        existing = client.search_read(
+            "ir.model.fields",
+            [["model", "=", model_name], ["name", "=", field_name]],
+            ["name", "ttype", "field_description", "modules"],
+        )
+        if existing:
+            f = existing[0]
+            modules = f.get("modules", "unknown")
+            return (
+                f"CONFLICT: Field '{field_name}' already exists on '{model_name}' "
+                f"(type: {f['ttype']}, label: {f.get('field_description', 'N/A')}, "
+                f"defined by: {modules})"
+            )
+        return f"CLEAR: Field '{field_name}' does not exist on '{model_name}'"
+    except Exception as exc:
+        return _handle_error(exc)
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
