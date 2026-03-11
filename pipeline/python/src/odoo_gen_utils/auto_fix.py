@@ -628,21 +628,26 @@ def _fix_w8161_env_translate(violation: Violation, file_path: Path) -> bool:
         return False
 
     # Collect line numbers of all _("...") calls inside FunctionDef nodes
-    call_positions: list[tuple[int, int]] = []  # (line_0based, col_offset)
+    call_positions_set: set[tuple[int, int]] = set()  # deduplicate (line_0based, col_offset)
 
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
-        # Walk this function's body for _() calls
+        # Only walk direct body nodes — NOT nested FunctionDefs (which ast.walk
+        # would recurse into, causing double-counting of _() calls in inner funcs)
         for child in ast.walk(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child is not node:
+                continue
             if (
                 isinstance(child, ast.Call)
                 and isinstance(child.func, ast.Name)
                 and child.func.id == "_"
             ):
-                call_positions.append(
+                call_positions_set.add(
                     (child.func.lineno - 1, child.func.col_offset)
                 )
+
+    call_positions: list[tuple[int, int]] = list(call_positions_set)
 
     if not call_positions:
         return False

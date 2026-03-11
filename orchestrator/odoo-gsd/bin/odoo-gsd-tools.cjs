@@ -656,14 +656,20 @@ async function main() {
         const projectName = args[2] || 'ERP Project';
         console.log(cycleLog.initLog(cwd, projectName));
       } else if (subCmd === 'append') {
-        const entryJson = args[2];
-        cycleLog.appendEntry(cwd, JSON.parse(entryJson));
+        if (!args[2]) { error('cycle-log append requires JSON argument'); break; }
+        try { cycleLog.appendEntry(cwd, JSON.parse(args[2])); }
+        catch (e) { error(`cycle-log append: invalid JSON — ${e.message}`); }
       } else if (subCmd === 'blocked') {
+        if (!args[2] || !args[3]) { error('cycle-log blocked requires <module> <reason>'); break; }
         cycleLog.appendBlockedModule(cwd, args[2], args[3]);
       } else if (subCmd === 'coherence') {
-        cycleLog.appendCoherenceEvent(cwd, JSON.parse(args[2]));
+        if (!args[2]) { error('cycle-log coherence requires JSON argument'); break; }
+        try { cycleLog.appendCoherenceEvent(cwd, JSON.parse(args[2])); }
+        catch (e) { error(`cycle-log coherence: invalid JSON — ${e.message}`); }
       } else if (subCmd === 'finalize') {
-        cycleLog.finalizeLog(cwd, JSON.parse(args[2]));
+        if (!args[2]) { error('cycle-log finalize requires JSON argument'); break; }
+        try { cycleLog.finalizeLog(cwd, JSON.parse(args[2])); }
+        catch (e) { error(`cycle-log finalize: invalid JSON — ${e.message}`); }
       } else {
         error('Unknown cycle-log subcommand. Available: init, append, blocked, coherence, finalize');
       }

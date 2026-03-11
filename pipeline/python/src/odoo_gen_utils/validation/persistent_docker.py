@@ -18,6 +18,7 @@ Usage:
     manager.stop()  # Only when human says done
 """
 
+import re
 import subprocess
 import time
 import json
@@ -26,6 +27,8 @@ from pathlib import Path
 from dataclasses import dataclass, field
 
 from .types import Result, InstallResult, TestResult
+
+_MODULE_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
 logger = logging.getLogger(__name__)
 
@@ -81,12 +84,20 @@ class PersistentDockerManager:
 
         return False
 
+    @staticmethod
+    def _validate_module_name(name: str) -> bool:
+        """Validate module name against Odoo naming convention."""
+        return bool(_MODULE_NAME_RE.match(name))
+
     def install_module(self, module_path: Path) -> Result[InstallResult]:
         """Install a module into the running instance incrementally."""
         if not self._running:
             return Result(success=False, errors=("Persistent Docker not running",))
 
         module_name = module_path.name
+        if not self._validate_module_name(module_name):
+            return Result(success=False,
+                          errors=(f"Invalid module name: {module_name!r} (must match [a-z][a-z0-9_]*)",))
 
         # Copy module into the running container's addons path
         copy_result = subprocess.run(
@@ -127,10 +138,10 @@ class PersistentDockerManager:
             "success": success,
             "error": error_msg if not success else None,
         }
-        self.install_order.append(entry)
+        self.install_order = [*self.install_order, entry]
 
         if success:
-            self.installed_modules.append(module_name)
+            self.installed_modules = [*self.installed_modules, module_name]
 
         self._save_state()
         return Result(success=True, data=install)
@@ -138,6 +149,9 @@ class PersistentDockerManager:
     def run_module_tests(self, module_path: Path) -> Result[tuple[TestResult, ...]]:
         """Run tests for a specific module in the persistent instance."""
         module_name = module_path.name
+        if not self._validate_module_name(module_name):
+            return Result(success=False,
+                          errors=(f"Invalid module name: {module_name!r}",))
 
         test_cmd = (
             f"odoo -c /etc/odoo/odoo.conf -d odoo_factory "
@@ -164,6 +178,10 @@ class PersistentDockerManager:
         tests for a set of modules together, catching integration issues
         that per-module tests miss.
         """
+        for name in module_names:
+            if not self._validate_module_name(name):
+                return Result(success=False,
+                              errors=(f"Invalid module name: {name!r}",))
         tags = ",".join(module_names)
         modules = ",".join(module_names)
 
@@ -215,8 +233,8 @@ class PersistentDockerManager:
             capture_output=True, timeout=30,
         )
         self._running = False
-        self.installed_modules.clear()
-        self.install_order.clear()
+        self.installed_modules = []
+        self.install_order = []
         self._save_state()
 
     def _health_check(self) -> bool:
@@ -250,7 +268,11 @@ class PersistentDockerManager:
             return
         state_path = self._state_dir / STATE_FILE
         if state_path.exists():
-            state = json.loads(state_path.read_text(encoding="utf-8"))
-            self.installed_modules = state.get("installed_modules", [])
-            self.install_order = state.get("install_order", [])
+            try:
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                logger.warning("Corrupt state file %s, resetting: %s", state_path, exc)
+                return
+            self.installed_modules = list(state.get("installed_modules", []))
+            self.install_order = list(state.get("install_order", []))
             self._running = state.get("running", False)

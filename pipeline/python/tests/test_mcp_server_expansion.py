@@ -95,3 +95,33 @@ class TestNewToolsErrorHandling:
             assert "ERROR:" in r1
             assert "ERROR:" in r2
             assert "ERROR:" in r3
+
+
+class TestParameterValidation:
+    """S5: Validate MCP tool parameters before XML-RPC calls."""
+
+    def test_invalid_model_name_rejected(self):
+        assert "ERROR:" in get_view_inheritance_chain("")
+        assert "ERROR:" in get_view_inheritance_chain("UPPER.Case")
+        assert "ERROR:" in get_view_inheritance_chain("has spaces")
+        assert "ERROR:" in get_model_relations("")
+        assert "ERROR:" in find_field_conflicts("", "name")
+
+    def test_invalid_view_type_rejected(self):
+        result = get_view_inheritance_chain("res.partner", "nonexistent")
+        assert "ERROR:" in result
+        assert "Invalid view_type" in result
+
+    def test_invalid_field_name_rejected(self):
+        assert "ERROR:" in find_field_conflicts("res.partner", "")
+        assert "ERROR:" in find_field_conflicts("res.partner", "Has Spaces")
+        assert "ERROR:" in find_field_conflicts("res.partner", "123bad")
+
+    def test_valid_params_pass_validation(self, mock_client):
+        mock_client.search_read.return_value = []
+        # These should reach the XML-RPC layer (no validation error)
+        r1 = get_view_inheritance_chain("res.partner", "form")
+        assert "ERROR:" not in r1 or "Cannot connect" in r1
+        mock_client.search_read.side_effect = [[], []]
+        r2 = get_model_relations("sale.order.line")
+        assert "ERROR:" not in r2 or "Cannot connect" in r2

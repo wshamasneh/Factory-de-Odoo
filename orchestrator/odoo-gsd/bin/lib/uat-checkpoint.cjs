@@ -6,6 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const MODULE_NAME_RE = /^[a-z][a-z0-9_]*$/;
+
 /**
  * Determine if a wave checkpoint is due.
  *
@@ -96,6 +98,9 @@ function generateChecklist(modules, registry) {
  * @param {string} [feedback] - User feedback for minor/fail
  */
 function recordResult(cwd, moduleName, result, feedback) {
+  if (!MODULE_NAME_RE.test(moduleName)) {
+    throw new Error(`Invalid module name: '${moduleName}' (must match [a-z][a-z0-9_]*)`);
+  }
   const uatDir = path.join(cwd, '.planning', 'modules', moduleName);
   if (!fs.existsSync(uatDir)) {
     fs.mkdirSync(uatDir, { recursive: true });

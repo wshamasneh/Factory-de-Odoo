@@ -113,3 +113,59 @@ class TestPersistentDockerManagerUnit:
         import subprocess
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 10)):
             assert manager._health_check() is False
+
+    def test_install_module_rejects_invalid_name(self, tmp_path):
+        manager = PersistentDockerManager()
+        manager._running = True
+        # Command injection attempt
+        result = manager.install_module(tmp_path / "foo; rm -rf /")
+        assert result.success is False
+        assert "Invalid module name" in result.errors[0]
+
+    def test_install_module_rejects_uppercase_name(self, tmp_path):
+        manager = PersistentDockerManager()
+        manager._running = True
+        result = manager.install_module(tmp_path / "MyModule")
+        assert result.success is False
+        assert "Invalid module name" in result.errors[0]
+
+    def test_install_module_accepts_valid_name(self, tmp_path):
+        manager = PersistentDockerManager()
+        manager._running = True
+        assert manager._validate_module_name("uni_student")
+        assert manager._validate_module_name("hr_payroll")
+        assert not manager._validate_module_name("0bad")
+        assert not manager._validate_module_name("")
+
+    def test_run_cross_module_rejects_invalid_names(self):
+        manager = PersistentDockerManager()
+        result = manager.run_cross_module_test(["valid_mod", "bad;name"])
+        assert result.success is False
+
+    def test_load_state_handles_corrupt_json(self, tmp_path):
+        state_path = tmp_path / STATE_FILE
+        state_path.write_text("{{not valid json", encoding="utf-8")
+        manager = PersistentDockerManager()
+        manager._state_dir = tmp_path
+        # Should not raise — just logs warning and returns
+        manager._load_state()
+        assert manager._running is False
+        assert manager.installed_modules == []
+
+    def test_immutable_install_order(self, tmp_path):
+        """Install operations create new lists, not mutate existing."""
+        manager = PersistentDockerManager()
+        manager._running = True
+        manager._state_dir = tmp_path
+        original_order = manager.install_order
+        original_modules = manager.installed_modules
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+            with patch("odoo_gen_utils.validation.log_parser.parse_install_log",
+                       return_value=(True, None)):
+                manager.install_module(tmp_path / "test_mod")
+
+        # Original references should be unchanged (new lists created)
+        assert original_order == []
+        assert original_modules == []

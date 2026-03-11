@@ -1,16 +1,14 @@
-version: "3.8"
-
 services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_USER: odoo
-      POSTGRES_PASSWORD: odoo
+      POSTGRES_USER: ${FACTORY_DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${FACTORY_DB_PASSWORD:-odoo}
       POSTGRES_DB: odoo_factory
     volumes:
       - factory-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      test: ["CMD-SHELL", "pg_isready -U ${FACTORY_DB_USER:-odoo}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -22,6 +20,17 @@ services:
         -c work_mem=16MB
         -c maintenance_work_mem=128MB
         -c max_connections=100
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - db-internal
 
   odoo:
     image: odoo:17.0
@@ -29,14 +38,14 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "${FACTORY_PORT:-8069}:8069"
+      - "127.0.0.1:${FACTORY_PORT:-8069}:8069"
     volumes:
       - factory-addons:/mnt/extra-addons
       - factory-odoo-data:/var/lib/odoo
     environment:
       HOST: db
-      USER: odoo
-      PASSWORD: odoo
+      USER: ${FACTORY_DB_USER:-odoo}
+      PASSWORD: ${FACTORY_DB_PASSWORD:-odoo}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8069/web/health"]
       interval: 10s
@@ -47,6 +56,23 @@ services:
       resources:
         limits:
           memory: 2G
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - db-internal
+      - default
+
+networks:
+  db-internal:
+    internal: true
 
 volumes:
   factory-db-data:

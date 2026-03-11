@@ -103,6 +103,16 @@ function scoreModule(moduleData, allModuleNames) {
     } else {
       crossModuleIssues.push(`Unresolved comodel references: ${unresolvedRefs.join(', ')}`);
     }
+
+    // Circular dependency risk: does this module's unresolved comodel
+    // references point to its own models (self-dependency via external path)?
+    const ownModelNames = new Set(models.map(m => m.name || m));
+    const hasCircularRisk = unresolvedRefs.some(ref => ownModelNames.has(ref));
+    if (!hasCircularRisk) {
+      score += 5;
+    } else {
+      crossModuleIssues.push('Circular dependency risk: comodel references own models via external path');
+    }
   }
 
   // Determine discussion depth
@@ -193,9 +203,9 @@ function getDiscussionSummary(scores) {
   const ready = Object.values(scores).filter(s => s.ready).length;
   const brief = Object.values(scores).filter(s => s.discussionDepth === 'brief').length;
   const full = Object.values(scores).filter(s => s.discussionDepth === 'full').length;
-  const avgScore = Math.round(
-    Object.values(scores).reduce((sum, s) => sum + s.score, 0) / total
-  );
+  const avgScore = total > 0
+    ? Math.round(Object.values(scores).reduce((sum, s) => sum + s.score, 0) / total)
+    : 0;
   return {
     total,
     ready,

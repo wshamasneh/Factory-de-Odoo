@@ -6,4 +6,5 @@ allowed-tools:
   - Bash
   - Glob
   - Write
+  - AskUserQuestion
 ---

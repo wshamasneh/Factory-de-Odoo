@@ -2264,3 +2264,213 @@ class TestRunDockerFixLoopTriedPatterns:
             any_fixed, _ = result.data
             assert any_fixed is False
             assert mock_dispatch.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# _fix_w8161_env_translate -- W8161 auto-fixer
+# ---------------------------------------------------------------------------
+
+
+class TestFixW8161EnvTranslate:
+    """W8161: Replace _('msg') with self.env._('msg') inside method bodies."""
+
+    def test_simple_translate_replacement(self, tmp_path: Path):
+        """Single _('text') in a method -> self.env._('text')."""
+        src = textwrap.dedent('''\
+            from odoo import _, fields, models
+
+            class TestModel(models.Model):
+                _name = "test.model"
+                _description = "Test"
+
+                def action_confirm(self):
+                    raise ValueError(_("Cannot confirm"))
+        ''')
+        mod = tmp_path / "test_module"
+        (mod / "models").mkdir(parents=True)
+        model_file = mod / "models" / "test_model.py"
+        model_file.write_text(src, encoding="utf-8")
+
+        v = Violation(file="models/test_model.py", line=8, column=0,
+                      rule_code="W8161", symbol="translation-not-lazy",
+                      severity="warning", message="_() used outside self.env")
+        result = fix_pylint_violation(v, mod)
+        assert result is True
+
+        content = model_file.read_text(encoding="utf-8")
+        assert 'self.env._("Cannot confirm")' in content
+        assert "from odoo import _" not in content or "from odoo import fields, models" in content
+
+    def test_multiple_calls_in_one_method(self, tmp_path: Path):
+        """Multiple _() calls in same method -> all replaced."""
+        src = textwrap.dedent('''\
+            from odoo import _, fields, models
+
+            class TestModel(models.Model):
+                _name = "test.model"
+                _description = "Test"
+
+                def action_confirm(self):
+                    if not self.name:
+                        raise ValueError(_("No name"))
+                    self.message_post(body=_("Confirmed"))
+        ''')
+        mod = tmp_path / "test_module"
+        (mod / "models").mkdir(parents=True)
+        model_file = mod / "models" / "test_model.py"
+        model_file.write_text(src, encoding="utf-8")
+
+        v = Violation(file="models/test_model.py", line=9, column=0,
+                      rule_code="W8161", symbol="translation-not-lazy",
+                      severity="warning", message="_() used outside self.env")
+        result = fix_pylint_violation(v, mod)
+        assert result is True
+
+        content = model_file.read_text(encoding="utf-8")
+        assert content.count("self.env._") == 2
+        assert content.count('_("') == 2  # the self.env._(" occurrences
+
+    def test_nested_function_no_double_replace(self, tmp_path: Path):
+        """Nested function inside method -> _() replaced once, not doubled."""
+        src = textwrap.dedent('''\
+            from odoo import _, fields, models
+
+            class TestModel(models.Model):
+                _name = "test.model"
+                _description = "Test"
+
+                def action_compute(self):
+                    def _helper():
+                        return _("inner")
+                    return _("outer")
+        ''')
+        mod = tmp_path / "test_module"
+        (mod / "models").mkdir(parents=True)
+        model_file = mod / "models" / "test_model.py"
+        model_file.write_text(src, encoding="utf-8")
+
+        v = Violation(file="models/test_model.py", line=9, column=0,
+                      rule_code="W8161", symbol="translation-not-lazy",
+                      severity="warning", message="_() used outside self.env")
+        result = fix_pylint_violation(v, mod)
+        assert result is True
+
+        content = model_file.read_text(encoding="utf-8")
+        # Each _() should be replaced exactly once (not self.env.self.env._)
+        assert "self.env.self.env._" not in content
+        assert content.count("self.env._") == 2
+
+    def test_class_level_call_untouched(self, tmp_path: Path):
+        """_() at class level (e.g. _description = _('...')) is NOT replaced."""
+        src = textwrap.dedent('''\
+            from odoo import _, fields, models
+
+            class TestModel(models.Model):
+                _name = "test.model"
+                _description = _("Test Model")
+
+                name = fields.Char(required=True)
+        ''')
+        mod = tmp_path / "test_module"
+        (mod / "models").mkdir(parents=True)
+        model_file = mod / "models" / "test_model.py"
+        model_file.write_text(src, encoding="utf-8")
+
+        v = Violation(file="models/test_model.py", line=5, column=0,
+                      rule_code="W8161", symbol="translation-not-lazy",
+                      severity="warning", message="_() used outside self.env")
+        result = fix_pylint_violation(v, mod)
+        # Class-level _() is NOT inside a FunctionDef, so no changes
+        assert result is False
+
+    def test_removes_standalone_underscore_import(self, tmp_path: Path):
+        """'from odoo import _' removed when sole import."""
+        src = textwrap.dedent('''\
+            from odoo import _
+            from odoo import fields, models
+
+            class TestModel(models.Model):
+                _name = "test.model"
+                _description = "Test"
+
+                def action_test(self):
+                    return _("hello")
+        ''')
+        mod = tmp_path / "test_module"
+        (mod / "models").mkdir(parents=True)
+        model_file = mod / "models" / "test_model.py"
+        model_file.write_text(src, encoding="utf-8")
+
+        v = Violation(file="models/test_model.py", line=9, column=0,
+                      rule_code="W8161", symbol="translation-not-lazy",
+                      severity="warning", message="_() used outside self.env")
+        result = fix_pylint_violation(v, mod)
+        assert result is True
+
+        content = model_file.read_text(encoding="utf-8")
+        assert "from odoo import _\n" not in content
+        assert "from odoo import fields, models" in content
+
+    def test_removes_underscore_from_multi_import(self, tmp_path: Path):
+        """'from odoo import _, fields, models' -> 'from odoo import fields, models'."""
+        src = textwrap.dedent('''\
+            from odoo import _, fields, models
+
+            class TestModel(models.Model):
+                _name = "test.model"
+                _description = "Test"
+
+                def action_test(self):
+                    return _("hello")
+        ''')
+        mod = tmp_path / "test_module"
+        (mod / "models").mkdir(parents=True)
+        model_file = mod / "models" / "test_model.py"
+        model_file.write_text(src, encoding="utf-8")
+
+        v = Violation(file="models/test_model.py", line=8, column=0,
+                      rule_code="W8161", symbol="translation-not-lazy",
+                      severity="warning", message="_() used outside self.env")
+        result = fix_pylint_violation(v, mod)
+        assert result is True
+
+        content = model_file.read_text(encoding="utf-8")
+        assert "from odoo import fields, models" in content
+        assert "_, " not in content
+
+    def test_syntax_error_returns_false(self, tmp_path: Path):
+        """Malformed Python -> returns False gracefully."""
+        src = "def broken(\n"
+        mod = tmp_path / "test_module"
+        (mod / "models").mkdir(parents=True)
+        model_file = mod / "models" / "bad.py"
+        model_file.write_text(src, encoding="utf-8")
+
+        v = Violation(file="models/bad.py", line=1, column=0,
+                      rule_code="W8161", symbol="translation-not-lazy",
+                      severity="warning", message="_() used outside self.env")
+        result = fix_pylint_violation(v, mod)
+        assert result is False
+
+    def test_no_calls_returns_false(self, tmp_path: Path):
+        """File with no _() calls -> returns False."""
+        src = textwrap.dedent('''\
+            from odoo import fields, models
+
+            class TestModel(models.Model):
+                _name = "test.model"
+                _description = "Test"
+
+                def action_test(self):
+                    return "hello"
+        ''')
+        mod = tmp_path / "test_module"
+        (mod / "models").mkdir(parents=True)
+        model_file = mod / "models" / "test_model.py"
+        model_file.write_text(src, encoding="utf-8")
+
+        v = Violation(file="models/test_model.py", line=8, column=0,
+                      rule_code="W8161", symbol="translation-not-lazy",
+                      severity="warning", message="_() used outside self.env")
+        result = fix_pylint_violation(v, mod)
+        assert result is False

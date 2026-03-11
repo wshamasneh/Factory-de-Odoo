@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import sys
 import xmlrpc.client
 
@@ -82,6 +83,25 @@ def _get_client() -> OdooClient:
         _client = OdooClient(config)
         logger.info("OdooClient created for %s", config.url)
     return _client
+
+
+_MODEL_NAME_RE = re.compile(r"^[a-z][a-z0-9_.]+$")
+_FIELD_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+_VIEW_TYPES = frozenset({"form", "tree", "kanban", "search", "calendar", "graph", "pivot", "activity"})
+
+
+def _validate_model_name(name: str) -> str | None:
+    """Return error string if model_name is invalid, else None."""
+    if not name or not _MODEL_NAME_RE.match(name):
+        return f"ERROR: Invalid model name '{name}'. Expected format: 'module.model' (e.g. 'res.partner')"
+    return None
+
+
+def _validate_field_name(name: str) -> str | None:
+    """Return error string if field_name is invalid, else None."""
+    if not name or not _FIELD_NAME_RE.match(name):
+        return f"ERROR: Invalid field name '{name}'. Expected format: lowercase with underscores (e.g. 'partner_id')"
+    return None
 
 
 def _handle_error(exc: Exception) -> str:
@@ -309,6 +329,10 @@ def get_view_inheritance_chain(model_name: str, view_type: str = "form") -> str:
     Returns:
         Chain showing base view → inherited views with priority and module.
     """
+    if err := _validate_model_name(model_name):
+        return err
+    if view_type not in _VIEW_TYPES:
+        return f"ERROR: Invalid view_type '{view_type}'. Expected one of: {', '.join(sorted(_VIEW_TYPES))}"
     try:
         client = _get_client()
         all_views = client.search_read(
@@ -357,6 +381,8 @@ def get_model_relations(model_name: str) -> str:
     Returns:
         Formatted list of outgoing and incoming relational fields.
     """
+    if err := _validate_model_name(model_name):
+        return err
     try:
         client = _get_client()
         relation_types = ["many2one", "one2many", "many2many"]
@@ -408,6 +434,10 @@ def find_field_conflicts(model_name: str, field_name: str) -> str:
     Returns:
         CONFLICT with details if field exists, CLEAR if not.
     """
+    if err := _validate_model_name(model_name):
+        return err
+    if err := _validate_field_name(field_name):
+        return err
     try:
         client = _get_client()
         existing = client.search_read(
