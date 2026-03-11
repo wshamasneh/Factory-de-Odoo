@@ -1637,3 +1637,119 @@ def resolve_keep_mine_cmd(module_dir: str, file_path: str) -> None:
     else:
         click.echo(f"Not found in pending: {file_path}", err=True)
         sys.exit(1)
+
+
+@main.command("factory-docker")
+@click.option("--action", type=click.Choice(["start", "stop", "reset", "status"]),
+              help="Lifecycle action for the persistent Docker instance")
+@click.option("--install", type=click.Path(exists=True),
+              help="Module path to install into the running instance")
+@click.option("--test", type=click.Path(exists=True),
+              help="Module path to run tests for")
+@click.option("--cross-test", multiple=True,
+              help="Module names for cross-module testing (repeatable)")
+@click.option("--url", is_flag=True, help="Print the Odoo web URL")
+@click.option("--history", is_flag=True, help="Print install history as JSON")
+@click.option("--state-dir", type=click.Path(), default=".planning",
+              help="Directory for state persistence (default: .planning)")
+def factory_docker(
+    action: str | None,
+    install: str | None,
+    test: str | None,
+    cross_test: tuple[str, ...],
+    url: bool,
+    history: bool,
+    state_dir: str,
+) -> None:
+    """Manage the persistent Docker factory instance for 90+ module generation."""
+    from odoo_gen_utils.validation.persistent_docker import PersistentDockerManager
+
+    manager = PersistentDockerManager()
+    sd = Path(state_dir)
+
+    if url:
+        click.echo(manager.get_web_url())
+        return
+
+    if history:
+        manager._state_dir = sd
+        manager._load_state()
+        click.echo(json.dumps(manager.get_install_history(), indent=2))
+        return
+
+    if action == "status":
+        manager._state_dir = sd
+        manager._load_state()
+        running = manager._running and manager._health_check()
+        click.echo(json.dumps({
+            "running": running,
+            "installed_count": len(manager.installed_modules),
+            "installed_modules": manager.installed_modules,
+            "url": manager.get_web_url() if running else None,
+        }, indent=2))
+        return
+
+    if action == "start":
+        ok = manager.ensure_running(state_dir=sd)
+        if ok:
+            click.echo("Persistent Docker instance is running.")
+            click.echo(f"Access Odoo at {manager.get_web_url()}")
+        else:
+            click.echo("Failed to start persistent Docker instance.", err=True)
+            sys.exit(1)
+        return
+
+    if action == "stop":
+        manager._state_dir = sd
+        manager._load_state()
+        manager.stop()
+        click.echo("Persistent Docker instance stopped (data preserved).")
+        return
+
+    if action == "reset":
+        manager._state_dir = sd
+        manager._load_state()
+        manager.reset()
+        click.echo("Persistent Docker instance destroyed (all data removed).")
+        return
+
+    if install:
+        manager._state_dir = sd
+        manager._load_state()
+        if not manager._running:
+            click.echo("Docker not running. Start with: factory-docker --action start", err=True)
+            sys.exit(1)
+        result = manager.install_module(Path(install))
+        if result.success and result.data and result.data.success:
+            click.echo(f"Installed {Path(install).name} successfully.")
+            click.echo(f"Total modules: {len(manager.installed_modules)}")
+        else:
+            msg = result.data.error_message if result.success and result.data else "; ".join(result.errors)
+            click.echo(f"Install failed: {msg}", err=True)
+            sys.exit(1)
+        return
+
+    if test:
+        manager._state_dir = sd
+        manager._load_state()
+        result = manager.run_module_tests(Path(test))
+        if result.success:
+            click.echo(f"Tests completed for {Path(test).name}.")
+        else:
+            click.echo(f"Test run failed: {'; '.join(result.errors)}", err=True)
+            sys.exit(1)
+        return
+
+    if cross_test:
+        manager._state_dir = sd
+        manager._load_state()
+        result = manager.run_cross_module_test(list(cross_test))
+        if result.success:
+            click.echo(f"Cross-module tests completed for: {', '.join(cross_test)}")
+        else:
+            click.echo(f"Cross-module test failed: {'; '.join(result.errors)}", err=True)
+            sys.exit(1)
+        return
+
+    click.echo("Specify --action, --install, --test, --cross-test, --url, or --history.", err=True)
+    sys.exit(1)

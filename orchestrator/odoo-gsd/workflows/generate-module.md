@@ -251,6 +251,14 @@ Report:
 - "Registry: updated to v${VERSION}"
 - "Next step: validate with Docker, or proceed to next module."
 
+## Step 10.5: Persistent Docker Install (if running)
+
+If the factory Docker instance is running (check via `factory-docker --action status`):
+1. Install the generated module: `factory-docker --install ${MODULE_DIR}`
+2. If install fails, log to cycle log but don't block status transition
+3. If install succeeds, log success with installed module count
+4. After every 10th module install: run cross-module tests on last 10 modules
+
 ## Completion
 
 Report to user:

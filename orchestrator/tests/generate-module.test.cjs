@@ -71,7 +71,7 @@ describe('BELT-WF: generate-module workflow structure', () => {
   test('has 10 steps', () => {
     const stepMatches = content.match(/^## Step \d+/gm);
     assert.ok(stepMatches, 'should have numbered steps');
-    assert.strictEqual(stepMatches.length, 10, 'should have exactly 10 steps');
+    assert.strictEqual(stepMatches.length, 11, 'should have 11 steps (10 + Step 10.5 persistent Docker)');
   });
 
   test('Step 1 validates module status', () => {
