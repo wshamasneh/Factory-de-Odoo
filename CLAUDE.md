@@ -44,9 +44,10 @@ pipeline/              — Python: Jinja2 templates, pylint-odoo, Docker validat
 | Renderer context | `pipeline/python/src/amil_utils/renderer_context.py` |
 
 ### Current State (factory-upgrades branch)
-All 8 fixes committed. All 8 gaps implemented. Ralph Loop docs complete.
-- 797 orchestrator tests passing, 94 pipeline tests passing
-- Ready to commit and merge to main
+Amil rebrand complete. All commands use `/amil:` prefix (46 total).
+- Odoo 19.0 upgrade + Amil rebrand applied
+- Pipeline is pure library — no user-facing commands
+- Ready to verify tests and merge to main
 
 ### Odoo Patterns
 - `self.env._()` not standalone `_()` in model methods (W8161)
