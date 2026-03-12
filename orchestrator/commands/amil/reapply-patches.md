@@ -1,5 +1,6 @@
 ---
-description: Reapply local modifications after a Amil update
+name: amil:reapply-patches
+description: Reapply local modifications after an Amil update
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
 ---
 
