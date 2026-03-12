@@ -17,9 +17,20 @@
         "{{ f }}",
 {% endfor %}
     ],
+{% if not no_demo | default(false) %}
     "demo": [
         "demo/demo_data.xml",
     ],
+{% endif %}
+{% if manifest_assets | default([]) %}
+    "assets": {
+{% for asset in manifest_assets %}
+        "{{ asset.bundle }}": [
+            "{{ module_name }}/{{ asset.path }}",
+        ],
+{% endfor %}
+    },
+{% endif %}
     "development_status": "Alpha",
     "application": {{ application | default(True) }},
 {% if external_dependencies is defined and external_dependencies %}

@@ -43,6 +43,11 @@ def _build_model_context(spec: dict[str, Any], model: dict[str, Any]) -> dict[st
     model_xml_id = _to_xml_id(model["name"])
 
     fields = model.get("fields", [])
+    # BUG-04: Wire sensitive flag to groups attribute
+    module_name = spec.get("module_name", "")
+    for f in fields:
+        if f.get("sensitive") and not f.get("groups"):
+            f["groups"] = f"{module_name}.group_{module_name}_manager"
     required_fields = [f for f in fields if f.get("required")]
     # Phase 29: complex constraints from preprocessor
     complex_constraints = model.get("complex_constraints", [])
@@ -182,6 +187,11 @@ def _build_model_context(spec: dict[str, Any], model: dict[str, Any]) -> dict[st
     ]
     has_dashboard = any(
         d.get("model_name") == model["name"]
+        for d in spec.get("dashboards", [])
+    )
+    has_kanban = any(
+        (d.get("kanban") or d.get("kanban_fields"))
+        and d.get("model_name") == model["name"]
         for d in spec.get("dashboards", [])
     )
 
@@ -354,6 +364,7 @@ def _build_model_context(spec: dict[str, Any], model: dict[str, Any]) -> dict[st
         # Phase 31 keys
         "model_reports": model_reports,
         "has_dashboard": has_dashboard,
+        "has_kanban": has_kanban,
         # Phase 33 keys
         "model_order": model.get("model_order", ""),
         "is_transient": model.get("transient", False),
@@ -672,7 +683,7 @@ def _build_module_context(spec: dict[str, Any], module_name: str) -> dict[str, A
         for bop in spec.get("bulk_operations", []):
             wiz_var = _to_python_var(bop["wizard_model"])
             manifest_files.append(f"views/{wiz_var}_wizard_form.xml")
-        manifest_files.append("static/src/js/bulk_progress.js")
+        pass  # JS handled via manifest_assets below
 
     # Phase 62: portal manifest files
     has_portal = spec.get("has_portal", False)
@@ -685,6 +696,14 @@ def _build_module_context(spec: dict[str, Any], module_name: str) -> dict[str, A
             portal_view_files.add(f"views/portal_{p['id']}.xml")
         portal_view_files.add("security/portal_rules.xml")
         manifest_files.extend(sorted(portal_view_files))
+
+    # Build asset bundle declarations (JS/CSS loaded via web.assets_backend)
+    manifest_assets: list[dict[str, str]] = []
+    if has_bulk_operations:
+        manifest_assets.append({
+            "bundle": "web.assets_backend",
+            "path": "static/src/js/bulk_progress.js",
+        })
 
     ctx: dict[str, Any] = {
         "module_name": module_name,
@@ -701,6 +720,7 @@ def _build_module_context(spec: dict[str, Any], module_name: str) -> dict[str, A
         "models": models,
         "view_files": _compute_view_files(spec),
         "manifest_files": manifest_files,
+        "manifest_assets": manifest_assets,
         "has_wizards": bool(spec_wizards) or has_import_export,
         "spec_wizards": spec_wizards,
         "has_controllers": bool(spec.get("controllers")) or has_portal,

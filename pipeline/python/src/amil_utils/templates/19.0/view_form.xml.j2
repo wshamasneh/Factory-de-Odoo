@@ -150,19 +150,17 @@
 {% endfor %}
                         </group>
                     </group>
+{% set notebook_fields = [] %}
 {% for field in view_fields | default(fields) %}
-{% if field.type == 'Html' %}
-                    <notebook>
-                        <page string="{{ field.string | default(field.name | replace('_', ' ') | title) }}">
-                            <field name="{{ field.name }}" widget="html"/>
-                        </page>
-                    </notebook>
+{% if field.type in ('One2many', 'Html') %}
+{% set _ = notebook_fields.append(field) %}
 {% endif %}
 {% endfor %}
-{% for field in view_fields | default(fields) %}
-{% if field.type == 'One2many' %}
+{% if notebook_fields %}
                     <notebook>
+{% for field in notebook_fields %}
                         <page string="{{ field.string | default(field.name | replace('_', ' ') | title) }}">
+{% if field.type == 'One2many' %}
                             <field name="{{ field.name }}">
 {% if field.editable is defined and field.editable %}
                                 <list editable="{{ field.editable }}">
@@ -180,10 +178,13 @@
 {% endfor %}
                                 </list>
                             </field>
+{% elif field.type == 'Html' %}
+                            <field name="{{ field.name }}" widget="html"/>
+{% endif %}
                         </page>
+{% endfor %}
                     </notebook>
 {% endif %}
-{% endfor %}
                 </sheet>
 {% if chatter %}
                 <chatter/>

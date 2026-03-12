@@ -5,7 +5,7 @@
     <record id="action_{{ model_name | to_xml_id }}" model="ir.actions.act_window">
         <field name="name">{{ model_description }}</field>
         <field name="res_model">{{ model_name }}</field>
-        <field name="view_mode">list,form{% if has_dashboard %},graph,pivot{% endif %}</field>
+        <field name="view_mode">list,{% if has_kanban %}kanban,{% endif %}form{% if has_dashboard %},graph,pivot{% endif %}</field>
         <field name="search_view_id" ref="view_{{ model_name | to_xml_id }}_search"/>
         <field name="context">{}</field>
         <field name="domain">[]</field>

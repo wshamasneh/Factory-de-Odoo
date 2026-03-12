@@ -23,9 +23,9 @@
 {% elif field.type == 'Html' %}
         <field name="{{ field.name }}">&lt;p&gt;Sample HTML content for record {{ record_num }}.&lt;/p&gt;</field>
 {% elif field.type == 'Date' %}
-        <field name="{{ field.name }}">2024-0{{ record_num }}-15</field>
+        <field name="{{ field.name }}" eval="(DateTime.today() - timedelta(days={{ record_num }} * 30)).strftime('%Y-%m-%d')"/>
 {% elif field.type == 'Datetime' %}
-        <field name="{{ field.name }}">2024-0{{ record_num }}-15 10:00:00</field>
+        <field name="{{ field.name }}" eval="(DateTime.today() - timedelta(days={{ record_num }} * 30)).strftime('%Y-%m-%d %H:%M:%S')"/>
 {% elif field.type == 'Selection' %}
 {% if field.selection %}
         <field name="{{ field.name }}">{{ field.selection[record_idx % field.selection | length][0] }}</field>
