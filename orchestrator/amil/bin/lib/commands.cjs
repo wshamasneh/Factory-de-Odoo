@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { safeReadFile, loadConfig, isGitIgnored, execGit, normalizePhaseName, comparePhaseNum, getArchivedPhaseDirs, generateSlugInternal, getMilestoneInfo, resolveModelInternal, MODEL_PROFILES, toPosixPath, output, error, findPhaseInternal } = require('./core.cjs');
+const { safeReadFile, loadConfig, isGitIgnored, execGit, normalizePhaseName, comparePhaseNum, getArchivedPhaseDirs, generateSlugInternal, getMilestoneInfo, resolveModelInternal, MODEL_PROFILES, toPosixPath, output, error, findPhaseInternal, scanTodos } = require('./core.cjs');
 const { extractFrontmatter } = require('./frontmatter.cjs');
 
 function cmdGenerateSlug(text, raw) {
@@ -42,40 +42,10 @@ function cmdCurrentTimestamp(format, raw) {
 }
 
 function cmdListTodos(cwd, area, raw) {
-  const pendingDir = path.join(cwd, '.planning', 'todos', 'pending');
-
-  let count = 0;
-  const todos = [];
-
-  try {
-    const files = fs.readdirSync(pendingDir).filter(f => f.endsWith('.md'));
-
-    for (const file of files) {
-      try {
-        const content = fs.readFileSync(path.join(pendingDir, file), 'utf-8');
-        const createdMatch = content.match(/^created:\s*(.+)$/m);
-        const titleMatch = content.match(/^title:\s*(.+)$/m);
-        const areaMatch = content.match(/^area:\s*(.+)$/m);
-
-        const todoArea = areaMatch ? areaMatch[1].trim() : 'general';
-
-        // Apply area filter if specified
-        if (area && todoArea !== area) continue;
-
-        count++;
-        todos.push({
-          file,
-          created: createdMatch ? createdMatch[1].trim() : 'unknown',
-          title: titleMatch ? titleMatch[1].trim() : 'Untitled',
-          area: todoArea,
-          path: toPosixPath(path.join('.planning', 'todos', 'pending', file)),
-        });
-      } catch { /* skip unreadable todo files */ }
-    }
-  } catch { /* pending dir may not exist */ }
-
-  const result = { count, todos };
-  output(result, raw, count.toString());
+  // ORCH-04: Use shared scanTodos helper from core.cjs
+  const todos = scanTodos(cwd, area || null);
+  const result = { count: todos.length, todos };
+  output(result, raw, todos.length.toString());
 }
 
 function cmdVerifyPathExists(cwd, targetPath, raw) {

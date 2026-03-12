@@ -7,16 +7,24 @@ const path = require('path');
 const { escapeRegex, loadConfig, getMilestoneInfo, getMilestonePhaseFilter, output, error } = require('./core.cjs');
 const { extractFrontmatter, reconstructFrontmatter } = require('./frontmatter.cjs');
 
+// Shared helper: build bold and plain regex patterns for a STATE.md field.
+// Used by stateExtractField, stateReplaceField, cmdStateGet, cmdStatePatch, cmdStateUpdate.
+function stateFieldPatterns(fieldName) {
+  const escaped = escapeRegex(fieldName);
+  return {
+    bold: new RegExp(`(\\*\\*${escaped}:\\*\\*\\s*)(.*)`, 'i'),
+    plain: new RegExp(`(^${escaped}:\\s*)(.*)`, 'im'),
+  };
+}
+
 // Shared helper: extract a field value from STATE.md content.
 // Supports both **Field:** bold and plain Field: format.
 function stateExtractField(content, fieldName) {
-  const escaped = escapeRegex(fieldName);
-  const boldPattern = new RegExp(`\\*\\*${escaped}:\\*\\*\\s*(.+)`, 'i');
-  const boldMatch = content.match(boldPattern);
-  if (boldMatch) return boldMatch[1].trim();
-  const plainPattern = new RegExp(`^${escaped}:\\s*(.+)`, 'im');
-  const plainMatch = content.match(plainPattern);
-  return plainMatch ? plainMatch[1].trim() : null;
+  const { bold, plain } = stateFieldPatterns(fieldName);
+  const boldMatch = content.match(bold);
+  if (boldMatch) return boldMatch[2].trim();
+  const plainMatch = content.match(plain);
+  return plainMatch ? plainMatch[2].trim() : null;
 }
 
 function cmdStateLoad(cwd, raw) {
@@ -74,27 +82,16 @@ function cmdStateGet(cwd, section, raw) {
       return;
     }
 
-    // Try to find markdown section or field
-    const fieldEscaped = section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-    // Check for **field:** value (bold format)
-    const boldPattern = new RegExp(`\\*\\*${fieldEscaped}:\\*\\*\\s*(.*)`, 'i');
-    const boldMatch = content.match(boldPattern);
-    if (boldMatch) {
-      output({ [section]: boldMatch[1].trim() }, raw, boldMatch[1].trim());
-      return;
-    }
-
-    // Check for field: value (plain format)
-    const plainPattern = new RegExp(`^${fieldEscaped}:\\s*(.*)`, 'im');
-    const plainMatch = content.match(plainPattern);
-    if (plainMatch) {
-      output({ [section]: plainMatch[1].trim() }, raw, plainMatch[1].trim());
+    // ORCH-05: Use shared helper for bold/plain field extraction
+    const fieldValue = stateExtractField(content, section);
+    if (fieldValue !== null) {
+      output({ [section]: fieldValue }, raw, fieldValue);
       return;
     }
 
     // Check for ## Section
-    const sectionPattern = new RegExp(`##\\s*${fieldEscaped}\\s*\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+    const sectionEscaped = escapeRegex(section);
+    const sectionPattern = new RegExp(`##\\s*${sectionEscaped}\\s*\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
     const sectionMatch = content.match(sectionPattern);
     if (sectionMatch) {
       output({ [section]: sectionMatch[1].trim() }, raw, sectionMatch[1].trim());
@@ -125,16 +122,10 @@ function cmdStatePatch(cwd, patches, raw) {
     const results = { updated: [], failed: [] };
 
     for (const [field, value] of Object.entries(patches)) {
-      const fieldEscaped = field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // Try **Field:** bold format first, then plain Field: format
-      const boldPattern = new RegExp(`(\\*\\*${fieldEscaped}:\\*\\*\\s*)(.*)`, 'i');
-      const plainPattern = new RegExp(`(^${fieldEscaped}:\\s*)(.*)`, 'im');
-
-      if (boldPattern.test(content)) {
-        content = content.replace(boldPattern, (_match, prefix) => `${prefix}${value}`);
-        results.updated.push(field);
-      } else if (plainPattern.test(content)) {
-        content = content.replace(plainPattern, (_match, prefix) => `${prefix}${value}`);
+      // ORCH-05: Use shared stateReplaceField helper
+      const replaced = stateReplaceField(content, field, value);
+      if (replaced !== null) {
+        content = replaced;
         results.updated.push(field);
       } else {
         results.failed.push(field);
@@ -158,18 +149,11 @@ function cmdStateUpdate(cwd, field, value) {
 
   const statePath = path.join(cwd, '.planning', 'STATE.md');
   try {
-    let content = fs.readFileSync(statePath, 'utf-8');
-    const fieldEscaped = field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Try **Field:** bold format first, then plain Field: format
-    const boldPattern = new RegExp(`(\\*\\*${fieldEscaped}:\\*\\*\\s*)(.*)`, 'i');
-    const plainPattern = new RegExp(`(^${fieldEscaped}:\\s*)(.*)`, 'im');
-    if (boldPattern.test(content)) {
-      content = content.replace(boldPattern, (_match, prefix) => `${prefix}${value}`);
-      writeStateMd(statePath, content, cwd);
-      output({ updated: true });
-    } else if (plainPattern.test(content)) {
-      content = content.replace(plainPattern, (_match, prefix) => `${prefix}${value}`);
-      writeStateMd(statePath, content, cwd);
+    const content = fs.readFileSync(statePath, 'utf-8');
+    // ORCH-05: Use shared stateReplaceField helper
+    const replaced = stateReplaceField(content, field, value);
+    if (replaced !== null) {
+      writeStateMd(statePath, replaced, cwd);
       output({ updated: true });
     } else {
       output({ updated: false, reason: `Field "${field}" not found in STATE.md` });
@@ -182,15 +166,13 @@ function cmdStateUpdate(cwd, field, value) {
 // ─── State Progression Engine ────────────────────────────────────────────────
 
 function stateReplaceField(content, fieldName, newValue) {
-  const escaped = escapeRegex(fieldName);
-  // Try **Field:** bold format first, then plain Field: format
-  const boldPattern = new RegExp(`(\\*\\*${escaped}:\\*\\*\\s*)(.*)`, 'i');
-  if (boldPattern.test(content)) {
-    return content.replace(boldPattern, (_match, prefix) => `${prefix}${newValue}`);
+  // ORCH-05: Use shared stateFieldPatterns helper
+  const { bold, plain } = stateFieldPatterns(fieldName);
+  if (bold.test(content)) {
+    return content.replace(bold, (_match, prefix) => `${prefix}${newValue}`);
   }
-  const plainPattern = new RegExp(`(^${escaped}:\\s*)(.*)`, 'im');
-  if (plainPattern.test(content)) {
-    return content.replace(plainPattern, (_match, prefix) => `${prefix}${newValue}`);
+  if (plain.test(content)) {
+    return content.replace(plain, (_match, prefix) => `${prefix}${newValue}`);
   }
   return null;
 }

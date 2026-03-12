@@ -4,7 +4,26 @@
 
 const fs = require('fs');
 const path = require('path');
-const { loadConfig, resolveModelInternal, findPhaseInternal, getRoadmapPhaseInternal, pathExistsInternal, generateSlugInternal, getMilestoneInfo, normalizePhaseName, toPosixPath, output, error, hasSourceFiles } = require('./core.cjs');
+const { loadConfig, resolveModelInternal, findPhaseInternal, getRoadmapPhaseInternal, pathExistsInternal, generateSlugInternal, getMilestoneInfo, normalizePhaseName, toPosixPath, output, error, hasSourceFiles, scanTodos } = require('./core.cjs');
+
+// ORCH-03: Shared helper to discover phase artifacts (CONTEXT, RESEARCH, VERIFICATION, UAT).
+// Returns an object with *_path keys for each found artifact file.
+const PHASE_ARTIFACT_NAMES = ['CONTEXT.md', 'RESEARCH.md', 'VERIFICATION.md', 'UAT.md'];
+function discoverPhaseArtifacts(cwd, phaseDir) {
+  const artifacts = {};
+  const phaseDirFull = path.join(cwd, phaseDir);
+  try {
+    const files = fs.readdirSync(phaseDirFull);
+    for (const name of PHASE_ARTIFACT_NAMES) {
+      const baseName = name.split('.')[0]; // e.g. 'CONTEXT'
+      const found = files.find(f => f.endsWith(`-${name}`) || f === name);
+      if (found) {
+        artifacts[baseName.toLowerCase() + '_path'] = toPosixPath(path.join(phaseDir, found));
+      }
+    }
+  } catch { /* phase dir files may be unreadable */ }
+  return artifacts;
+}
 
 function cmdInitExecutePhase(cwd, phase, raw) {
   if (!phase) {
@@ -132,27 +151,8 @@ function cmdInitPlanPhase(cwd, phase, raw) {
   };
 
   if (phaseInfo?.directory) {
-    // Find *-CONTEXT.md in phase directory
-    const phaseDirFull = path.join(cwd, phaseInfo.directory);
-    try {
-      const files = fs.readdirSync(phaseDirFull);
-      const contextFile = files.find(f => f.endsWith('-CONTEXT.md') || f === 'CONTEXT.md');
-      if (contextFile) {
-        result.context_path = toPosixPath(path.join(phaseInfo.directory, contextFile));
-      }
-      const researchFile = files.find(f => f.endsWith('-RESEARCH.md') || f === 'RESEARCH.md');
-      if (researchFile) {
-        result.research_path = toPosixPath(path.join(phaseInfo.directory, researchFile));
-      }
-      const verificationFile = files.find(f => f.endsWith('-VERIFICATION.md') || f === 'VERIFICATION.md');
-      if (verificationFile) {
-        result.verification_path = toPosixPath(path.join(phaseInfo.directory, verificationFile));
-      }
-      const uatFile = files.find(f => f.endsWith('-UAT.md') || f === 'UAT.md');
-      if (uatFile) {
-        result.uat_path = toPosixPath(path.join(phaseInfo.directory, uatFile));
-      }
-    } catch { /* phase dir files may be unreadable */ }
+    // ORCH-03: Use shared artifact discovery
+    Object.assign(result, discoverPhaseArtifacts(cwd, phaseInfo.directory));
   }
 
   output(result, raw);
@@ -409,26 +409,8 @@ function cmdInitPhaseOp(cwd, phase, raw) {
   };
 
   if (phaseInfo?.directory) {
-    const phaseDirFull = path.join(cwd, phaseInfo.directory);
-    try {
-      const files = fs.readdirSync(phaseDirFull);
-      const contextFile = files.find(f => f.endsWith('-CONTEXT.md') || f === 'CONTEXT.md');
-      if (contextFile) {
-        result.context_path = toPosixPath(path.join(phaseInfo.directory, contextFile));
-      }
-      const researchFile = files.find(f => f.endsWith('-RESEARCH.md') || f === 'RESEARCH.md');
-      if (researchFile) {
-        result.research_path = toPosixPath(path.join(phaseInfo.directory, researchFile));
-      }
-      const verificationFile = files.find(f => f.endsWith('-VERIFICATION.md') || f === 'VERIFICATION.md');
-      if (verificationFile) {
-        result.verification_path = toPosixPath(path.join(phaseInfo.directory, verificationFile));
-      }
-      const uatFile = files.find(f => f.endsWith('-UAT.md') || f === 'UAT.md');
-      if (uatFile) {
-        result.uat_path = toPosixPath(path.join(phaseInfo.directory, uatFile));
-      }
-    } catch { /* phase dir files may be unreadable */ }
+    // ORCH-03: Use shared artifact discovery
+    Object.assign(result, discoverPhaseArtifacts(cwd, phaseInfo.directory));
   }
 
   output(result, raw);
@@ -438,34 +420,8 @@ function cmdInitTodos(cwd, area, raw) {
   const config = loadConfig(cwd);
   const now = new Date();
 
-  // List todos (reuse existing logic)
-  const pendingDir = path.join(cwd, '.planning', 'todos', 'pending');
-  let count = 0;
-  const todos = [];
-
-  try {
-    const files = fs.readdirSync(pendingDir).filter(f => f.endsWith('.md'));
-    for (const file of files) {
-      try {
-        const content = fs.readFileSync(path.join(pendingDir, file), 'utf-8');
-        const createdMatch = content.match(/^created:\s*(.+)$/m);
-        const titleMatch = content.match(/^title:\s*(.+)$/m);
-        const areaMatch = content.match(/^area:\s*(.+)$/m);
-        const todoArea = areaMatch ? areaMatch[1].trim() : 'general';
-
-        if (area && todoArea !== area) continue;
-
-        count++;
-        todos.push({
-          file,
-          created: createdMatch ? createdMatch[1].trim() : 'unknown',
-          title: titleMatch ? titleMatch[1].trim() : 'Untitled',
-          area: todoArea,
-          path: '.planning/todos/pending/' + file,
-        });
-      } catch { /* skip unreadable todo files */ }
-    }
-  } catch { /* pending dir may not exist */ }
+  // ORCH-04: Use shared scanTodos helper
+  const todos = scanTodos(cwd, area || null);
 
   const result = {
     // Config
@@ -476,7 +432,7 @@ function cmdInitTodos(cwd, area, raw) {
     timestamp: now.toISOString(),
 
     // Todo inventory
-    todo_count: count,
+    todo_count: todos.length,
     todos,
     area_filter: area || null,
 

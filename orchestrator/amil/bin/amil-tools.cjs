@@ -128,7 +128,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { error } = require('./lib/core.cjs');
+const { error, parseArgs } = require('./lib/core.cjs');
 const state = require('./lib/state.cjs');
 const phase = require('./lib/phase.cjs');
 const roadmap = require('./lib/roadmap.cjs');
@@ -201,49 +201,59 @@ async function main() {
       } else if (subcommand === 'advance-plan') {
         state.cmdStateAdvancePlan(cwd, raw);
       } else if (subcommand === 'record-metric') {
-        const phaseIdx = args.indexOf('--phase');
-        const planIdx = args.indexOf('--plan');
-        const durationIdx = args.indexOf('--duration');
-        const tasksIdx = args.indexOf('--tasks');
-        const filesIdx = args.indexOf('--files');
+        const { phase: metricPhase, plan, duration, tasks, files } = parseArgs(args, {
+          phase: { type: 'string' },
+          plan: { type: 'string' },
+          duration: { type: 'string' },
+          tasks: { type: 'string' },
+          files: { type: 'string' },
+        });
         state.cmdStateRecordMetric(cwd, {
-          phase: phaseIdx !== -1 ? args[phaseIdx + 1] : null,
-          plan: planIdx !== -1 ? args[planIdx + 1] : null,
-          duration: durationIdx !== -1 ? args[durationIdx + 1] : null,
-          tasks: tasksIdx !== -1 ? args[tasksIdx + 1] : null,
-          files: filesIdx !== -1 ? args[filesIdx + 1] : null,
+          phase: metricPhase,
+          plan,
+          duration,
+          tasks,
+          files,
         }, raw);
       } else if (subcommand === 'update-progress') {
         state.cmdStateUpdateProgress(cwd, raw);
       } else if (subcommand === 'add-decision') {
-        const phaseIdx = args.indexOf('--phase');
-        const summaryIdx = args.indexOf('--summary');
-        const summaryFileIdx = args.indexOf('--summary-file');
-        const rationaleIdx = args.indexOf('--rationale');
-        const rationaleFileIdx = args.indexOf('--rationale-file');
+        const { phase: decisionPhase, summary, 'summary-file': summaryFile, rationale, 'rationale-file': rationaleFile } = parseArgs(args, {
+          phase: { type: 'string' },
+          summary: { type: 'string' },
+          'summary-file': { type: 'string' },
+          rationale: { type: 'string', default: '' },
+          'rationale-file': { type: 'string' },
+        });
         state.cmdStateAddDecision(cwd, {
-          phase: phaseIdx !== -1 ? args[phaseIdx + 1] : null,
-          summary: summaryIdx !== -1 ? args[summaryIdx + 1] : null,
-          summary_file: summaryFileIdx !== -1 ? args[summaryFileIdx + 1] : null,
-          rationale: rationaleIdx !== -1 ? args[rationaleIdx + 1] : '',
-          rationale_file: rationaleFileIdx !== -1 ? args[rationaleFileIdx + 1] : null,
+          phase: decisionPhase,
+          summary,
+          summary_file: summaryFile,
+          rationale,
+          rationale_file: rationaleFile,
         }, raw);
       } else if (subcommand === 'add-blocker') {
-        const textIdx = args.indexOf('--text');
-        const textFileIdx = args.indexOf('--text-file');
+        const { text, 'text-file': textFile } = parseArgs(args, {
+          text: { type: 'string' },
+          'text-file': { type: 'string' },
+        });
         state.cmdStateAddBlocker(cwd, {
-          text: textIdx !== -1 ? args[textIdx + 1] : null,
-          text_file: textFileIdx !== -1 ? args[textFileIdx + 1] : null,
+          text,
+          text_file: textFile,
         }, raw);
       } else if (subcommand === 'resolve-blocker') {
-        const textIdx = args.indexOf('--text');
-        state.cmdStateResolveBlocker(cwd, textIdx !== -1 ? args[textIdx + 1] : null, raw);
+        const { text: resolveText } = parseArgs(args, {
+          text: { type: 'string' },
+        });
+        state.cmdStateResolveBlocker(cwd, resolveText, raw);
       } else if (subcommand === 'record-session') {
-        const stoppedIdx = args.indexOf('--stopped-at');
-        const resumeIdx = args.indexOf('--resume-file');
+        const { 'stopped-at': stoppedAt, 'resume-file': resumeFile } = parseArgs(args, {
+          'stopped-at': { type: 'string' },
+          'resume-file': { type: 'string', default: 'None' },
+        });
         state.cmdStateRecordSession(cwd, {
-          stopped_at: stoppedIdx !== -1 ? args[stoppedIdx + 1] : null,
-          resume_file: resumeIdx !== -1 ? args[resumeIdx + 1] : 'None',
+          stopped_at: stoppedAt,
+          resume_file: resumeFile,
         }, raw);
       } else {
         state.cmdStateLoad(cwd, raw);
@@ -277,8 +287,10 @@ async function main() {
 
     case 'verify-summary': {
       const summaryPath = args[1];
-      const countIndex = args.indexOf('--check-count');
-      const checkCount = countIndex !== -1 ? parseInt(args[countIndex + 1], 10) : 2;
+      const { 'check-count': checkCountStr } = parseArgs(args, {
+        'check-count': { type: 'string', default: '2' },
+      });
+      const checkCount = parseInt(checkCountStr, 10);
       verify.cmdVerifySummary(cwd, summaryPath, checkCount, raw);
       break;
     }
@@ -289,19 +301,21 @@ async function main() {
         template.cmdTemplateSelect(cwd, args[2], raw);
       } else if (subcommand === 'fill') {
         const templateType = args[2];
-        const phaseIdx = args.indexOf('--phase');
-        const planIdx = args.indexOf('--plan');
-        const nameIdx = args.indexOf('--name');
-        const typeIdx = args.indexOf('--type');
-        const waveIdx = args.indexOf('--wave');
-        const fieldsIdx = args.indexOf('--fields');
+        const { phase: fillPhase, plan: fillPlan, name: fillName, type: fillType, wave: fillWave, fields: fieldsJson } = parseArgs(args, {
+          phase: { type: 'string' },
+          plan: { type: 'string' },
+          name: { type: 'string' },
+          type: { type: 'string', default: 'execute' },
+          wave: { type: 'string', default: '1' },
+          fields: { type: 'string', default: '{}' },
+        });
         template.cmdTemplateFill(cwd, templateType, {
-          phase: phaseIdx !== -1 ? args[phaseIdx + 1] : null,
-          plan: planIdx !== -1 ? args[planIdx + 1] : null,
-          name: nameIdx !== -1 ? args[nameIdx + 1] : null,
-          type: typeIdx !== -1 ? args[typeIdx + 1] : 'execute',
-          wave: waveIdx !== -1 ? args[waveIdx + 1] : '1',
-          fields: fieldsIdx !== -1 ? JSON.parse(args[fieldsIdx + 1]) : {},
+          phase: fillPhase,
+          plan: fillPlan,
+          name: fillName,
+          type: fillType,
+          wave: fillWave,
+          fields: JSON.parse(fieldsJson),
         }, raw);
       } else {
         error('Unknown template subcommand. Available: select, fill');
@@ -313,18 +327,20 @@ async function main() {
       const subcommand = args[1];
       const file = args[2];
       if (subcommand === 'get') {
-        const fieldIdx = args.indexOf('--field');
-        frontmatter.cmdFrontmatterGet(cwd, file, fieldIdx !== -1 ? args[fieldIdx + 1] : null, raw);
+        const { field: fmGetField } = parseArgs(args, { field: { type: 'string' } });
+        frontmatter.cmdFrontmatterGet(cwd, file, fmGetField, raw);
       } else if (subcommand === 'set') {
-        const fieldIdx = args.indexOf('--field');
-        const valueIdx = args.indexOf('--value');
-        frontmatter.cmdFrontmatterSet(cwd, file, fieldIdx !== -1 ? args[fieldIdx + 1] : null, valueIdx !== -1 ? args[valueIdx + 1] : undefined, raw);
+        const { field: fmSetField, value: fmSetValue } = parseArgs(args, {
+          field: { type: 'string' },
+          value: { type: 'string' },
+        });
+        frontmatter.cmdFrontmatterSet(cwd, file, fmSetField, fmSetValue === null ? undefined : fmSetValue, raw);
       } else if (subcommand === 'merge') {
-        const dataIdx = args.indexOf('--data');
-        frontmatter.cmdFrontmatterMerge(cwd, file, dataIdx !== -1 ? args[dataIdx + 1] : null, raw);
+        const { data: fmMergeData } = parseArgs(args, { data: { type: 'string' } });
+        frontmatter.cmdFrontmatterMerge(cwd, file, fmMergeData, raw);
       } else if (subcommand === 'validate') {
-        const schemaIdx = args.indexOf('--schema');
-        frontmatter.cmdFrontmatterValidate(cwd, file, schemaIdx !== -1 ? args[schemaIdx + 1] : null, raw);
+        const { schema: fmSchema } = parseArgs(args, { schema: { type: 'string' } });
+        frontmatter.cmdFrontmatterValidate(cwd, file, fmSchema, raw);
       } else {
         error('Unknown frontmatter subcommand. Available: get, set, merge, validate');
       }
@@ -394,12 +410,15 @@ async function main() {
     case 'phases': {
       const subcommand = args[1];
       if (subcommand === 'list') {
-        const typeIndex = args.indexOf('--type');
-        const phaseIndex = args.indexOf('--phase');
+        const { type: listType, phase: listPhase, 'include-archived': includeArchived } = parseArgs(args, {
+          type: { type: 'string' },
+          phase: { type: 'string' },
+          'include-archived': { type: 'boolean' },
+        });
         const options = {
-          type: typeIndex !== -1 ? args[typeIndex + 1] : null,
-          phase: phaseIndex !== -1 ? args[phaseIndex + 1] : null,
-          includeArchived: args.includes('--include-archived'),
+          type: listType,
+          phase: listPhase,
+          includeArchived,
         };
         phase.cmdPhasesList(cwd, options, raw);
       } else {
@@ -441,8 +460,8 @@ async function main() {
       } else if (subcommand === 'insert') {
         phase.cmdPhaseInsert(cwd, args[2], args.slice(3).join(' '), raw);
       } else if (subcommand === 'remove') {
-        const forceFlag = args.includes('--force');
-        phase.cmdPhaseRemove(cwd, args[2], { force: forceFlag }, raw);
+        const { force } = parseArgs(args, { force: { type: 'boolean' } });
+        phase.cmdPhaseRemove(cwd, args[2], { force }, raw);
       } else if (subcommand === 'complete') {
         phase.cmdPhaseComplete(cwd, args[2], raw);
       } else {
@@ -454,9 +473,11 @@ async function main() {
     case 'milestone': {
       const subcommand = args[1];
       if (subcommand === 'complete') {
-        const nameIndex = args.indexOf('--name');
-        const archivePhases = args.includes('--archive-phases');
+        const { 'archive-phases': archivePhases } = parseArgs(args, {
+          'archive-phases': { type: 'boolean' },
+        });
         // Collect --name value (everything after --name until next flag or end)
+        const nameIndex = args.indexOf('--name');
         let milestoneName = null;
         if (nameIndex !== -1) {
           const nameArgs = [];
@@ -478,8 +499,8 @@ async function main() {
       if (subcommand === 'consistency') {
         verify.cmdValidateConsistency(cwd, raw);
       } else if (subcommand === 'health') {
-        const repairFlag = args.includes('--repair');
-        verify.cmdValidateHealth(cwd, { repair: repairFlag }, raw);
+        const { repair } = parseArgs(args, { repair: { type: 'boolean' } });
+        verify.cmdValidateHealth(cwd, { repair }, raw);
       } else {
         error('Unknown validate subcommand. Available: consistency, health');
       }
@@ -504,10 +525,13 @@ async function main() {
 
     case 'scaffold': {
       const scaffoldType = args[1];
-      const phaseIndex = args.indexOf('--phase');
+      const { phase: scaffoldPhase } = parseArgs(args, {
+        phase: { type: 'string' },
+      });
+      // --name consumes all remaining args after the flag (multi-word name)
       const nameIndex = args.indexOf('--name');
       const scaffoldOptions = {
-        phase: phaseIndex !== -1 ? args[phaseIndex + 1] : null,
+        phase: scaffoldPhase,
         name: nameIndex !== -1 ? args.slice(nameIndex + 1).join(' ') : null,
       };
       commands.cmdScaffold(cwd, scaffoldType, scaffoldOptions, raw);
@@ -571,19 +595,21 @@ async function main() {
 
     case 'summary-extract': {
       const summaryPath = args[1];
-      const fieldsIndex = args.indexOf('--fields');
-      const fields = fieldsIndex !== -1 ? args[fieldsIndex + 1].split(',') : null;
+      const { fields: fieldsStr } = parseArgs(args, { fields: { type: 'string' } });
+      const fields = fieldsStr !== null ? fieldsStr.split(',') : null;
       commands.cmdSummaryExtract(cwd, summaryPath, fields, raw);
       break;
     }
 
     case 'websearch': {
       const query = args[1];
-      const limitIdx = args.indexOf('--limit');
-      const freshnessIdx = args.indexOf('--freshness');
+      const { limit: limitStr, freshness } = parseArgs(args, {
+        limit: { type: 'string', default: '10' },
+        freshness: { type: 'string' },
+      });
       await commands.cmdWebsearch(query, {
-        limit: limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : 10,
-        freshness: freshnessIdx !== -1 ? args[freshnessIdx + 1] : null,
+        limit: parseInt(limitStr, 10),
+        freshness,
       }, raw);
       break;
     }
@@ -679,14 +705,11 @@ async function main() {
     case 'coherence': {
       const subcommand = args[1];
       if (subcommand === 'check') {
-        const specIdx = args.indexOf('--spec');
-        const regIdx = args.indexOf('--registry');
-        coherence.cmdCoherenceCheck(
-          cwd,
-          specIdx !== -1 ? args[specIdx + 1] : null,
-          regIdx !== -1 ? args[regIdx + 1] : null,
-          raw
-        );
+        const { spec, registry } = parseArgs(args, {
+          spec: { type: 'string' },
+          registry: { type: 'string' },
+        });
+        coherence.cmdCoherenceCheck(cwd, spec, registry, raw);
       } else {
         error('Unknown coherence subcommand. Available: check');
       }

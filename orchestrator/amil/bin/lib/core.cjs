@@ -339,7 +339,7 @@ function getRoadmapPhaseInternal(cwd, phaseNum) {
     const sectionEnd = nextHeaderMatch ? headerIndex + nextHeaderMatch.index : content.length;
     const section = content.slice(headerIndex, sectionEnd).trim();
 
-    const goalMatch = section.match(/\*\*Goal:\*\*\s*([^\n]+)/i);
+    const goalMatch = section.match(/\*\*Goal:?\*\*:?\s*([^\n]+)/i);
     const goal = goalMatch ? goalMatch[1].trim() : null;
 
     return {
@@ -496,6 +496,63 @@ function hasSourceFiles(dir) {
   return scan(dir, 0);
 }
 
+// ORCH-04: Shared todo scanning — used by both cmdInitTodos and cmdListTodos
+function scanTodos(cwd, areaFilter) {
+  const pendingDir = path.join(cwd, '.planning', 'todos', 'pending');
+  const todos = [];
+  try {
+    const files = fs.readdirSync(pendingDir).filter(f => f.endsWith('.md'));
+    for (const file of files) {
+      try {
+        const content = fs.readFileSync(path.join(pendingDir, file), 'utf-8');
+        const createdMatch = content.match(/^created:\s*(.+)$/m);
+        const titleMatch = content.match(/^title:\s*(.+)$/m);
+        const areaMatch = content.match(/^area:\s*(.+)$/m);
+        const todoArea = areaMatch ? areaMatch[1].trim() : 'general';
+        if (areaFilter && todoArea !== areaFilter) continue;
+        todos.push({
+          file,
+          created: createdMatch ? createdMatch[1].trim() : 'unknown',
+          title: titleMatch ? titleMatch[1].trim() : 'Untitled',
+          area: todoArea,
+          path: toPosixPath(path.join('.planning', 'todos', 'pending', file)),
+        });
+      } catch { /* skip unreadable todo files */ }
+    }
+  } catch { /* pending dir may not exist */ }
+  return todos;
+}
+
+// ─── Argument parsing ────────────────────────────────────────────────────────
+
+/**
+ * Parse CLI flags from an args array according to a schema.
+ *
+ * Schema keys become flag names (prefixed with --).
+ *   type: 'boolean' — flag presence yields true/false
+ *   type: 'string'  — flag followed by next arg as value
+ *   default         — fallback when flag is absent (null if unset)
+ *
+ * @param {string[]} args
+ * @param {Record<string, {type: 'boolean'|'string', default?: *}>} schema
+ * @returns {Record<string, *>}
+ */
+function parseArgs(args, schema) {
+  const result = {};
+  for (const [key, config] of Object.entries(schema)) {
+    const flag = `--${key}`;
+    const idx = args.indexOf(flag);
+    if (config.type === 'boolean') {
+      result[key] = idx !== -1;
+    } else if (idx !== -1 && idx + 1 < args.length) {
+      result[key] = args[idx + 1];
+    } else {
+      result[key] = config.default ?? null;
+    }
+  }
+  return result;
+}
+
 module.exports = {
   MODEL_PROFILES,
   output,
@@ -519,4 +576,6 @@ module.exports = {
   toPosixPath,
   ensureWithinCwd,
   hasSourceFiles,
+  scanTodos,
+  parseArgs,
 };
