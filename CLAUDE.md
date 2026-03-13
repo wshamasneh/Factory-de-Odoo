@@ -23,18 +23,21 @@ is preferred to prevent mid-task disruption.
 
 ### Architecture
 ```
-orchestrator/          — JS: state, phases, agents, dependency graph, coherence
+orchestrator/          — Python: state, phases, agents, dependency graph, coherence
 pipeline/              — Python: Jinja2 templates, pylint-odoo, Docker validation, MCP
 ```
+All orchestrator logic lives in `amil_utils.orchestrator` (Python 3.12). Zero Node.js runtime dependency.
 
 ### Key Paths
 | Component | Path |
 |-----------|------|
-| Orchestrator lib | `orchestrator/amil/bin/lib/` |
-| Orchestrator tests | `orchestrator/tests/` |
+| Orchestrator CLI | `amil-utils orch <command>` |
+| Orchestrator src | `pipeline/python/src/amil_utils/orchestrator/` |
+| Orchestrator tests | `pipeline/python/tests/orchestrator/` |
 | Commands | `orchestrator/commands/amil/` |
 | Workflows | `orchestrator/amil/workflows/` |
-| Python src | `pipeline/python/src/amil_utils/` |
+| Hooks | `orchestrator/hooks/amil-*.py` |
+| Pipeline src | `pipeline/python/src/amil_utils/` |
 | Templates 17.0 | `pipeline/python/src/amil_utils/templates/17.0/` |
 | Templates 18.0 | `pipeline/python/src/amil_utils/templates/18.0/` |
 | Templates 19.0 | `pipeline/python/src/amil_utils/templates/19.0/` |
@@ -44,10 +47,10 @@ pipeline/              — Python: Jinja2 templates, pylint-odoo, Docker validat
 | Renderer context | `pipeline/python/src/amil_utils/renderer_context.py` |
 
 ### Current State (factory-upgrades branch)
-Amil rebrand complete. All commands use `/amil:` prefix (46 total).
+Amil rebrand + Python unification complete. All commands use `/amil:` prefix (46 total).
 - Odoo 19.0 upgrade + Amil rebrand applied
+- CJS orchestrator fully ported to Python (~8,000 lines, 500+ tests)
 - Pipeline is pure library — no user-facing commands
-- Ready to verify tests and merge to main
 
 ### Odoo Patterns
 - `self.env._()` not standalone `_()` in model methods (W8161)

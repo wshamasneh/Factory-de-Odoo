@@ -26,25 +26,43 @@ Modules progress through these states sequentially. Only one module generates at
 
 ### CLI Tool
 ```bash
-node amil/bin/amil-tools.cjs <command> [args] [--raw] [--cwd <path>]
+amil-utils orch <command> [args] [--raw] [--cwd <path>]
 ```
 
-Key commands: `state`, `resolve-model`, `find-phase`, `commit`, `verify-summary`, `roadmap`, `requirements`, `phase`, `validate`, `init`, `frontmatter`, `template`, `scaffold`, `progress`.
+Key commands: `state`, `resolve-model`, `find-phase`, `commit`, `roadmap`, `requirements`, `phase`, `validate`, `init`, `frontmatter`, `template`, `scaffold`, `progress`.
 
 ### Directory Structure
 ```
 amil/
   bin/
-    amil-tools.cjs    # CLI entry point
-    install.js         # Claude-Code-only installer
-    lib/               # CJS modules (core, state, phase, config, etc.)
+    install.js         # npm-based installer
   workflows/           # Workflow definitions (execute-plan, plan-phase, etc.)
   references/          # Reference docs (checkpoints, git integration, etc.)
   templates/           # Document templates (summary, plan, project, etc.)
 commands/amil/         # Slash commands (/amil:*)
 agents/                # Agent definitions (amil-*.md)
-hooks/                 # Hook scripts (amil-*.js)
-tests/                 # Test suite (*.test.cjs)
+hooks/                 # Hook scripts (amil-*.py)
+install.py             # Python installer
+```
+
+### Python Implementation
+```
+pipeline/python/src/amil_utils/orchestrator/
+  __init__.py          # Package init
+  cli.py               # Click CLI (~60 commands)
+  core.py              # Foundation: paths, slugs, timestamps, phase lookup
+  state.py             # Session state management (691 lines equivalent)
+  phase.py             # Phase operations, plan indexing
+  roadmap.py           # Roadmap parsing and progress
+  frontmatter.py       # YAML frontmatter extraction
+  config.py            # Config management
+  health.py            # Project health checks
+  dependency_graph.py  # Phase dependency analysis
+  registry.py          # Model registry operations
+  milestone.py         # Milestone lifecycle
+  commands.py          # Git commit, verify, summary-extract
+  init_commands.py     # Workflow initialization commands
+  ... (20+ modules total)
 ```
 
 ## Command Reference
@@ -131,21 +149,23 @@ All commands use the `/amil:` prefix (46 total):
 2. **All state changes through CLI subcommands** -- never edit STATE.md or config.json manually
 3. **Atomic writes for JSON state** -- write complete files, never partial updates
 4. **Immutable data patterns** -- create new objects, never mutate existing
-5. **CJS module format** -- all lib modules use CommonJS (require/module.exports)
-6. **Zero npm runtime dependencies** -- only Node.js built-ins at runtime
+5. **Python-first** -- all orchestrator logic lives in `amil_utils.orchestrator`
+6. **Zero Node.js runtime dependency** -- Python 3.12 only at runtime
 
 ## Development
 
 ### Running Tests
 ```bash
-npm test                    # Run all tests
-npm run test:coverage       # Run with coverage (80%+ required)
+cd pipeline/python
+pytest tests/orchestrator/           # Run orchestrator tests (500+)
+pytest tests/orchestrator/ --cov     # With coverage
+pytest tests/                        # Full suite (2900+ tests)
 ```
 
 ### Test Structure
-- Tests are in `tests/*.test.cjs`
-- Test helpers in `tests/helpers.cjs`
-- `TOOLS_PATH` points to `amil/bin/amil-tools.cjs`
+- Tests are in `pipeline/python/tests/orchestrator/`
+- 500+ tests covering all modules
+- Parity tests verify Python output matches original CJS behavior
 - Tests create temp directories, never modify the real project
 
 ### Code Quality

@@ -35,14 +35,17 @@ Invoked by orchestrator commands, not directly by users:
 ## Python Utilities (amil-utils)
 
 ```bash
-python -m amil_utils <subcommand>
+python -m amil_utils <subcommand>     # Pipeline: render-module, validate, etc.
+amil-utils orch <command>              # Orchestrator: state, phases, registry, etc.
 ```
 
-Key subcommands: `render-module`, `validate`, `index-oca`, `search`, `auto-fix`
+Key pipeline subcommands: `render-module`, `validate`, `index-oca`, `search`, `auto-fix`
+Key orchestrator subcommands: `state`, `resolve-model`, `find-phase`, `commit`, `roadmap`, `requirements`, `phase`, `validate`, `progress`
 
 **Package:** `pipeline/python/src/amil_utils/`
+**Orchestrator:** `pipeline/python/src/amil_utils/orchestrator/` (20+ modules, ~60 Click commands)
 **Config:** `pipeline/python/pyproject.toml`
-**Tests:** `pipeline/python/tests/` (70+ test files)
+**Tests:** `pipeline/python/tests/` (2900+ tests, 500+ orchestrator-specific)
 
 ## Key Decisions
 | Decision | Rationale | Status |
