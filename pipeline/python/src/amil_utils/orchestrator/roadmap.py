@@ -191,6 +191,12 @@ def roadmap_analyze(cwd: str | Path) -> dict:
         None,
     )
 
+    # Detect checklist phases missing detailed sections
+    checklist_pattern = re.compile(r"-\s*\[[ x]\]\s*(?:.*Phase\s+)?(\d+[A-Z]?(?:\.\d+)*)", re.IGNORECASE)
+    checklist_phases = {m.group(1) for m in checklist_pattern.finditer(content)}
+    detail_phases = {p["number"] for p in phases}
+    missing_details = sorted(checklist_phases - detail_phases)
+
     return {
         "milestones": milestones,
         "phases": phases,
@@ -201,6 +207,7 @@ def roadmap_analyze(cwd: str | Path) -> dict:
         "progress_percent": min(100, round((total_summaries / total_plans) * 100)) if total_plans > 0 else 0,
         "current_phase": current_phase["number"] if current_phase else None,
         "next_phase": next_phase["number"] if next_phase else None,
+        "missing_phase_details": missing_details if missing_details else None,
     }
 
 

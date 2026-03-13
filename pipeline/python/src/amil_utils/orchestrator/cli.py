@@ -917,8 +917,8 @@ def phase_plan_index_cmd(phase: str, cwd: str, raw: bool) -> None:
 
 @orch_group.command("generate-slug")
 @click.argument("text")
-@click.option("--raw", is_flag=True, default=False, help="Raw output mode")
-def generate_slug_cmd(text: str, raw: bool) -> None:
+@_common
+def generate_slug_cmd(text: str, cwd: str, raw: bool) -> None:
     from amil_utils.orchestrator.commands import generate_slug
 
     _emit(generate_slug(text))
@@ -926,8 +926,8 @@ def generate_slug_cmd(text: str, raw: bool) -> None:
 
 @orch_group.command("current-timestamp")
 @click.argument("format", default="full")
-@click.option("--raw", is_flag=True, default=False, help="Raw output mode")
-def current_timestamp_cmd(format: str, raw: bool) -> None:
+@_common
+def current_timestamp_cmd(format: str, cwd: str, raw: bool) -> None:
     from amil_utils.orchestrator.commands import current_timestamp
 
     _emit(current_timestamp(format))
