@@ -474,8 +474,8 @@ def _auto_display_name_pattern(fields: list[dict[str, Any]]) -> tuple[str, list[
         pattern = "{" + first_char["name"] + "}"
         return (pattern, [first_char["name"]])
 
-    # Fallback: use record id
-    return ("#{id}", ["id"])
+    # No suitable field — skip auto display_name (Odoo's default is fine)
+    return ("", [])
 
 def _build_model_context(spec: dict[str, Any], model: dict[str, Any]) -> dict[str, Any]:
     """Build the template context for a single model from the module spec.

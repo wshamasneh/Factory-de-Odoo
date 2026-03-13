@@ -1070,13 +1070,13 @@ def _classify_migration_ops(
     pre_ops: list[dict[str, Any]] = []
     post_ops: list[dict[str, Any]] = []
     pre_types = {"rename_field", "drop_column", "rename_model", "sql"}
-    post_types = {"add_column", "sql"}
+    post_types = {"add_column"}
 
     for op in operations:
         op_type = op.get("type", "rename_field")
         if op_type in pre_types:
             pre_ops.append(op)
-        if op_type in post_types:
+        elif op_type in post_types:
             post_ops.append(op)
 
     return pre_ops, post_ops
@@ -1109,6 +1109,21 @@ def render_migrations(
             operations = migration.get("operations", [])
             if not operations:
                 continue
+
+            # C1: Validate identifiers to prevent SQL injection in generated scripts
+            _SQL_IDENT_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_.]*$")
+            for op in operations:
+                for key in ("model", "old_name", "new_name"):
+                    val = op.get(key, "")
+                    if val and not _SQL_IDENT_RE.match(val):
+                        return Result.fail(
+                            f"render_migrations: invalid SQL identifier '{val}' in {key}"
+                        )
+                if op.get("type") == "sql":
+                    _logger.warning(
+                        "Migration %s contains raw SQL operation — review generated script",
+                        to_version,
+                    )
 
             pre_ops, post_ops = _classify_migration_ops(operations)
             mig_dir = module_dir / "migrations" / to_version
