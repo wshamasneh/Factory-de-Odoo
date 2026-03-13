@@ -397,3 +397,9 @@ def factory_docker(action: str|None, install: str|None, test: str|None, cross_te
     if r["output"]: click.echo(r["output"])
     if r["error"]: click.echo(r["error"], err=True)
     if r["exit_code"] != 0: sys.exit(r["exit_code"])
+
+# -- orchestrator subgroup -----------------------------------------------------
+
+from amil_utils.orchestrator.cli import orch_group  # noqa: E402
+
+main.add_command(orch_group)
