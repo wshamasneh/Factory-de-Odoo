@@ -4,7 +4,8 @@
 > **Status:** Approved
 > **Branch:** `factory-upgrades`
 > **Scope:** Merge orchestrator (Node.js CJS) and pipeline (Python 3.12) into a single Python codebase
-> **Prerequisite:** Improvement Guide Tiers 0 and 1 completed; Tier 2 should execute before the port
+> **Prerequisite:** All 6 tiers of the Improvement Guide completed (47 tasks)
+> **Last Updated:** 2026-03-13
 
 ---
 
@@ -12,8 +13,8 @@
 
 Factory de Odoo has two codebases in two languages:
 
-- **Orchestrator** (Node.js CJS): 23 modules, ~8,000 lines, zero npm deps. Manages state, phases, dependency graphs, coherence checks, and project lifecycle.
-- **Pipeline** (Python 3.12): 68 modules, ~24,000 lines. Handles Jinja2 template rendering, Pydantic validation, pylint-odoo, Docker validation, ChromaDB search, and MCP server.
+- **Orchestrator** (Node.js CJS): 23 modules, ~7,968 lines, zero npm deps, 838 tests, 85% coverage. Manages state, phases, dependency graphs, coherence checks, and project lifecycle. Recently refactored (Tier 3): parseArgs helper, consolidated state patterns, deduplicated phase discovery.
+- **Pipeline** (Python 3.12): ~80 modules, ~9,700 lines (root) + subpackages. 2,383 tests, 85% coverage. Recently restructured (Tier 2): CLI commands extracted to `commands/` subdirectory, `_build_model_context` split into 8 sub-builders, ModuleSpec kept typed, semantic validation in render_module. Enriched with Tier 4-5 features: 19 render stages, 22 preprocessors, 52 shared templates.
 
 They communicate exclusively through JSON over stdout (the orchestrator spawns Claude agents that call `amil-utils` CLI commands via Bash). There is zero shared in-process state.
 
@@ -438,41 +439,38 @@ At every phase, CJS code still exists. If a ported command produces wrong output
 
 The existing Improvement Guide (`IMPROVEMENT-GUIDE.md` in the Factory Upgrades documentation) has 47 tasks across 6 tiers (8+6+7+6+12+8). Here's how they interact with this unification:
 
-### Completed
+### All Tiers Completed (as of 2026-03-13)
+
+All 47 tasks across 6 tiers have been executed and committed to the `factory-upgrades` branch:
 
 - **Tier 0** (BUG-01 to BUG-08): 8 bugs fixed
 - **Tier 1** (INFRA-01 to INFRA-06): 6 infrastructure fixes applied
+- **Tier 2** (PIPE-01 to PIPE-07): 7 pipeline architecture tasks completed. PIPE-03 extracted CLI commands into `amil_utils/commands/` (9 modules, cli.py now 398 lines). PIPE-02 split `_build_model_context` into 8 sub-builders.
+- **Tier 3** (ORCH-01 to ORCH-06): 6 orchestrator architecture tasks completed. `parseArgs()` added to core.cjs, `discoverPhaseArtifacts()` extracted, `stateFieldPatterns()` consolidated, goal regex fixed, 41 new tests added. These CJS improvements make the code cleaner to port — the extracted helpers map directly to Python functions.
+- **Tier 4** (TMPL-01 to TMPL-12): 12 template quality tasks completed. Stat buttons, search filters, list decorations, auto-active field, display_name, models.Constraint, enriched tests, Form() helper, @tagged, HttpCase, view_hints, multi-step wizards.
+- **Tier 5** (NEW-01 to NEW-08): 8 new capability tasks completed. OWL components, asset bundles, server actions, auto display_name for 19.0, semantic dep cross-validation, migration scripts, external_dependencies auto-detect, module settings.
 
-### Execute As-Is (27 tasks)
+### Port-Relevant Changes from Tier 3
 
-- **Tier 2** (PIPE-01 to PIPE-07): 7 pipeline architecture tasks. Execute before the port. PIPE-03 (extract CLI commands) directly prepares for the orchestrator commands joining the same Click app.
-- **Tier 4** (TMPL-01 to TMPL-12): 12 template quality tasks. Can run in parallel with the port.
-- **Tier 5** (NEW-01 to NEW-08): 8 new capability tasks. Execute after Tier 4.
+The CJS code is now cleaner than when this spec was written. Key helpers that port directly to Python:
 
-Not a single line of these 27 tasks needs modification for the unification.
-
-### Replaced by Port (6 tasks)
-
-- **Tier 3** (ORCH-01 to ORCH-06): 6 orchestrator architecture tasks. All are CJS improvements that the Python port solves natively:
-
-| Task | How the Port Solves It |
-|---|---|
-| ORCH-01 (parseNamedArgs) | Click handles argument parsing natively |
-| ORCH-02 (tests for decomp/circular-dep) | Python tests written alongside the port |
-| ORCH-03 (deduplicate phase discovery) | Phase discovery written once in `phase.py` |
-| ORCH-04 (deduplicate todo listing) | Todo scanning written once in `commands.py` |
-| ORCH-05 (consolidate stateExtractField) | State parsing written once in `state.py` |
-| ORCH-06 (goal regex mismatch) | Fixed in Python `roadmap.py` |
+| CJS Helper | Location | Python Equivalent |
+|---|---|---|
+| `parseArgs(args, schema)` | `core.cjs:540` | Replaced entirely by Click decorators |
+| `discoverPhaseArtifacts(phaseDir)` | `init.cjs:12` | Direct port to `phase.py` |
+| `stateFieldPatterns()` | `state.cjs:12-18` | Direct port to `state.py` |
+| `scanTodos(cwd, filter)` | `core.cjs` | Direct port to `commands.py` |
 
 ### Execution Sequence
 
 ```
 DONE  Tier 0 (Bugs, 8 tasks)
 DONE  Tier 1 (Infrastructure, 6 tasks)
-NEXT  Tier 2 (Pipeline Architecture, 7 tasks)
-THEN  Python Port (replaces Tier 3, 5 migration phases)
-THEN  Tier 4 (Template Quality, 12 tasks) — can overlap with port
-THEN  Tier 5 (New Capabilities, 8 tasks)
+DONE  Tier 2 (Pipeline Architecture, 7 tasks)
+DONE  Tier 3 (Orchestrator Architecture, 6 tasks)
+DONE  Tier 4 (Template Quality, 12 tasks)
+DONE  Tier 5 (New Capabilities, 8 tasks)
+NEXT  Python Port (5 migration phases)
 ```
 
 ---
