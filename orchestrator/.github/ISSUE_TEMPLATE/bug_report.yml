@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: Amil Version
-      description: "Run: node amil/bin/amil-tools.cjs --version"
+      description: "Run: amil-utils orch version"
       placeholder: "e.g., 1.18.0"
     validations:
       required: true
