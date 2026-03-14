@@ -47,7 +47,7 @@ Root-level directories mirror the `~/.claude/` install layout:
 - **Immutability** — create new objects, never mutate existing
 - **Atomic writes** — write complete JSON files, never partial updates
 - **Error handling** — handle errors explicitly at every level
-- **Input validation** — validate at system boundaries using Zod/Pydantic
+- **Input validation** — validate at system boundaries using Pydantic
 - **No `console.log`** — use proper logging
 
 ## Test Conventions
