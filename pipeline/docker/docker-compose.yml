@@ -1,5 +1,9 @@
-# Ephemeral Odoo 17.0 + PostgreSQL 16 for module validation
+# Ephemeral Odoo 18.0 + PostgreSQL 16 for module validation
 # Usage: MODULE_PATH=/path/to/module MODULE_NAME=module_name docker compose up
+#
+# Windows note: MODULE_PATH must use forward-slash notation even on Windows.
+# When running from PowerShell, convert with: $p = (pwd).Path -replace '\\','/'
+# Example: $env:MODULE_PATH = "C:/Users/you/addons/my_module"
 services:
   db:
     image: postgres:16
@@ -16,7 +20,7 @@ services:
       - /var/lib/postgresql/data
 
   odoo:
-    image: odoo:17
+    image: odoo:18
     depends_on:
       db:
         condition: service_healthy
@@ -26,6 +30,10 @@ services:
       PASSWORD: odoo
     volumes:
       - ${MODULE_PATH:-.}:/mnt/extra-addons/${MODULE_NAME:-module}:ro
+      # Mount enterprise addons if ODOO_ENTERPRISE_PATH is set
+      # Set this env var to your local Odoo EE addons path
+      # Example (Windows): ODOO_ENTERPRISE_PATH=C:/odoo/enterprise
+      - ${ODOO_ENTERPRISE_PATH:-/dev/null}:/mnt/enterprise-addons:ro
     configs:
       - source: odoo_conf
         target: /etc/odoo/odoo.conf

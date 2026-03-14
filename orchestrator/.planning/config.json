@@ -1,21 +1,11 @@
 {
-  "model_profile": "quality",
-  "commit_docs": true,
-  "search_gitignored": false,
-  "branching_strategy": "milestone",
-  "phase_branch_template": "gsd/phase-{phase}-{slug}",
-  "milestone_branch_template": "gsd/{milestone}-{slug}",
-  "workflow": {
-    "research": true,
-    "plan_check": true,
-    "verifier": true,
-    "nyquist_validation": true,
-    "auto_advance": true,
-    "_auto_chain_active": false
-  },
-  "parallelization": true,
-  "brave_search": false,
-  "git": {
-    "branching_strategy": "milestone"
+  "odoo": {
+    "gen_path": "./pipeline",
+    "odoo_version": "18.0",
+    "edition": "enterprise",
+    "addons_path": "./addons",
+    "_windows_note": "On Windows, use forward slashes or double backslashes in paths.",
+    "_enterprise_path": "Set ODOO_ENTERPRISE_PATH env var to your local EE addons folder, e.g. C:/odoo/enterprise",
+    "_enterprise_code": "Set ODOO_ENTERPRISE_CODE env var to your Odoo EE license key"
   }
 }

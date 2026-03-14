@@ -1,7 +1,7 @@
 {
   "odoo": {
-    "odoo_version": "17.0",
-    "edition": "community",
+    "odoo_version": "18.0",
+    "edition": "enterprise",
     "output_dir": ".",
     "license": "LGPL-3",
     "author": "",
