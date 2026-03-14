@@ -21,13 +21,13 @@ from pathlib import Path
 
 CLAUDE_CONFIG_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude"))
 SOURCE_ROOT = Path(__file__).resolve().parent
-PIPELINE_PYTHON = SOURCE_ROOT / "pipeline" / "python" if (SOURCE_ROOT / "pipeline").exists() else SOURCE_ROOT.parent / "pipeline" / "python"
+PIPELINE_PYTHON = SOURCE_ROOT / "python"
 
 # Directories to install
 INSTALL_DIRS = {
-    "amil": "amil",
-    "commands/amil": "commands/amil",
     "agents": "agents",
+    "amil": "amil",
+    "commands": "commands",
     "hooks": "hooks",
 }
 
@@ -86,7 +86,7 @@ def install_pip_package() -> bool:
             return True
         except subprocess.CalledProcessError:
             warn(f"Could not install amil-utils: {e.stderr.strip()}")
-            warn("  Install manually: pip install -e pipeline/python")
+            warn("  Install manually: pip install -e python")
             return False
 
 
