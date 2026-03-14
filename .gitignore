@@ -42,3 +42,4 @@ pgdata/
 # Docker dev environment
 docker/dev/.env
 .mcp.json
+python/uni_fee/
