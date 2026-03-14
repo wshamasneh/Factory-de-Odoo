@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="orchestrator/assets/factory-logo.svg?v=2" alt="Factory de Odoo" width="500"/>
+  <img src="assets/factory-logo.svg?v=2" alt="Factory de Odoo" width="500"/>
 </p>
 
 <h1 align="center">Factory de Odoo</h1>
@@ -33,8 +33,8 @@
 
 | Component | Role | Tech |
 |-----------|------|------|
-| **Orchestrator** (`orchestrator/`) | Decomposes an ERP PRD into 20+ modules, tracks cross-module state, drives sequential generation | Python 3.12 (`amil_utils.orchestrator`), 485 tests |
-| **Pipeline** (`pipeline/`) | Pure library — renders individual Odoo modules from JSON specs using 9 AI agents, 60 Jinja2 templates, and Docker validation | Python 3.12, 2,468 tests |
+| **Orchestrator** (`python/src/amil_utils/orchestrator/`) | Decomposes an ERP PRD into 20+ modules, tracks cross-module state, drives sequential generation | Python 3.12 (`amil_utils.orchestrator`), 485 tests |
+| **Pipeline** (`python/src/amil_utils/`) | Pure library — renders individual Odoo modules from JSON specs using 9 AI agents, 60 Jinja2 templates, and Docker validation | Python 3.12, 2,468 tests |
 
 **Combined:** 2,953 tests &bull; 33,200+ Python LOC &bull; 27 orchestrator modules &bull; 60 Jinja2 templates &bull; 28 AI agents &bull; 46 slash commands &bull; 12 knowledge files
 
@@ -107,13 +107,13 @@ cd Factory-de-Odoo
 **2. Install the Python package:**
 
 ```bash
-cd pipeline/python
+cd python
 uv venv --python 3.12
 uv pip install -e ".[dev]"
-cd ../..
+cd ..
 ```
 
-> This creates a `.venv` in `pipeline/python/`, installs `amil-utils` in editable mode with both the pipeline and orchestrator CLI, and pulls all dev dependencies (pytest, pylint-odoo, etc.).
+> This creates a `.venv` in `python/`, installs `amil-utils` in editable mode with both the pipeline and orchestrator CLI, and pulls all dev dependencies (pytest, pylint-odoo, etc.).
 
 **3. Verify installation:**
 
@@ -122,7 +122,7 @@ cd ../..
 amil-utils orch --help
 
 # Run all tests — skip Docker tests if Docker isn't running
-cd pipeline/python && uv run pytest tests/ -m "not docker" --tb=short -q && cd ../..
+cd python && uv run pytest tests/ -m "not docker" --tb=short -q && cd ..
 ```
 
 ### Configuration
@@ -132,7 +132,7 @@ When using Factory de Odoo to generate modules for your ERP project, create a `.
 ```json
 {
   "odoo": {
-    "gen_path": "/absolute/path/to/Factory-de-Odoo/pipeline",
+    "gen_path": "/absolute/path/to/Factory-de-Odoo",
     "odoo_version": "19.0",
     "edition": "community",
     "addons_path": "./addons"
@@ -143,7 +143,7 @@ When using Factory de Odoo to generate modules for your ERP project, create a `.
 Or set the environment variable:
 
 ```bash
-export AMIL_GEN_PATH="/absolute/path/to/Factory-de-Odoo/pipeline"
+export AMIL_GEN_PATH="/absolute/path/to/Factory-de-Odoo"
 ```
 
 ### Your First ERP
@@ -178,22 +178,21 @@ For a single standalone module (no ERP decomposition):
 ```
 Factory-de-Odoo/
 |
-+-- orchestrator/                    # Cross-module brain
-|   +-- amil/workflows/              # 41 workflow definitions
-|   +-- amil/references/             # Reference docs (config, git, checkpoints)
-|   +-- amil/templates/              # Document templates (plan, project, summary)
-|   +-- agents/                      # 19 orchestration agents
-|   +-- commands/amil/               # 46 slash commands (/amil:*)
-|   +-- hooks/                       # 3 event hooks (amil-*.py)
-|
-+-- pipeline/                        # Single-module belt (Python)
-|   +-- python/src/amil_utils/       # Rendering engine, validation, search
-|   +-- python/src/amil_utils/orchestrator/  # 27 Python modules, 60+ Click commands
-|   +-- python/src/amil_utils/templates/     # 60 Jinja2 templates (17.0/18.0/19.0/shared)
-|   +-- agents/                      # 9 generation agents
++-- agents/                          # 28 AI agents (19 orchestrator + 9 pipeline)
++-- amil/                            # Extension content
+|   +-- workflows/                   # 41 workflow definitions
+|   +-- references/                  # Reference docs
+|   +-- templates/                   # Document templates
 |   +-- knowledge/                   # 12 Odoo knowledge files (80+ examples)
-|   +-- docker/                      # Odoo 19 + PostgreSQL 16 validation
-|   +-- python/tests/                # 2,953 tests (pytest)
++-- commands/amil/                   # 46 slash commands (/amil:*)
++-- hooks/                           # 3 event hooks
+|
++-- python/                          # Python library
+|   +-- src/amil_utils/              # Rendering engine, validation, search
+|   +-- src/amil_utils/orchestrator/ # 27 Python modules, 60+ Click commands
+|   +-- src/amil_utils/templates/    # 60 Jinja2 templates (17.0/18.0/19.0/shared)
+|   +-- tests/                       # ~2,900 tests (pytest)
++-- docker/                          # Odoo 19 + PostgreSQL 16 dev instance
 ```
 
 ### Orchestrator
@@ -333,7 +332,7 @@ All 46 commands use the `/amil:` prefix. Run `/amil:help` for the full reference
 ## Testing
 
 ```bash
-cd pipeline/python
+cd python
 
 # Run all tests (~2,953 tests, ~3 min)
 uv run pytest tests/ -q
@@ -370,7 +369,7 @@ uv run pytest tests/ --cov=amil_utils --cov-report=html
 A persistent Odoo 19 CE + PostgreSQL 16 development instance for manual testing:
 
 ```bash
-cd pipeline
+cd docker
 
 # Start the instance
 bash scripts/odoo-dev.sh start
@@ -390,7 +389,7 @@ bash scripts/odoo-dev.sh reset
 12 domain knowledge files with 80+ WRONG/CORRECT example pairs that prevent AI hallucinations:
 
 ```
-pipeline/knowledge/
+amil/knowledge/
 +-- MASTER.md        # Integration guide
 +-- models.md        # ORM fields, computed, constraints
 +-- views.md         # Forms, trees, kanban, search
@@ -437,7 +436,7 @@ Extend the knowledge base by adding `.md` files to `knowledge/custom/` — they 
 
 ## Contributing
 
-See [pipeline/CONTRIBUTING.md](pipeline/CONTRIBUTING.md) for development setup, coding standards, and contribution guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and contribution guidelines.
 
 ### Core Principles
 

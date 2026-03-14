@@ -33,7 +33,7 @@ git clone https://github.com/TIFAQM/Factory-de-Odoo.git
 cd Factory-de-Odoo
 
 # Create virtual environment and install dependencies
-cd pipeline/python
+cd python
 uv venv --python 3.12
 uv pip install -e ".[test,search]"
 
@@ -170,7 +170,7 @@ All contributions must follow TDD:
 ### Running Tests
 
 ```bash
-cd pipeline/python
+cd python
 
 # All tests
 uv run pytest tests/ -v
@@ -411,7 +411,7 @@ docs: update knowledge base with mail.thread rules
 4. **Implement** the minimal code to pass tests
 5. **Run the full test suite:**
    ```bash
-   cd pipeline/python && uv run pytest tests/ -v
+   cd python && uv run pytest tests/ -v
    ```
 6. **Verify golden path** (if templates/rendering changed):
    ```bash

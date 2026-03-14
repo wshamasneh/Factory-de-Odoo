@@ -19,12 +19,14 @@ is preferred to prevent mid-task disruption.
 - **Repo:** https://github.com/Inshal5Rauf1/Factory-de-Odoo
 - **Purpose:** PRD-to-ERP pipeline for generating 90+ Odoo modules
 - **Branch:** `factory-upgrades` (based off `main`)
-- **Guide:** `FACTORY-UPGRADE-BUILD-GUIDE.md` — master implementation spec
 
 ### Architecture
 ```
-orchestrator/          — Python: state, phases, agents, dependency graph, coherence
-pipeline/              — Python: Jinja2 templates, pylint-odoo, Docker validation, MCP
+agents/                — 28 AI agent definitions (19 orchestrator + 9 pipeline)
+amil/                  — Workflows, references, templates, knowledge base
+commands/amil/         — 46 slash commands (/amil:* prefix)
+hooks/                 — 3 event hooks
+python/src/amil_utils/ — Python library: rendering, validation, orchestrator, search
 ```
 All orchestrator logic lives in `amil_utils.orchestrator` (Python 3.12). Zero Node.js runtime dependency.
 
@@ -32,28 +34,58 @@ All orchestrator logic lives in `amil_utils.orchestrator` (Python 3.12). Zero No
 | Component | Path |
 |-----------|------|
 | Orchestrator CLI | `amil-utils orch <command>` |
-| Orchestrator src | `pipeline/python/src/amil_utils/orchestrator/` |
-| Orchestrator tests | `pipeline/python/tests/orchestrator/` |
-| Commands | `orchestrator/commands/amil/` |
-| Workflows | `orchestrator/amil/workflows/` |
-| Hooks | `orchestrator/hooks/amil-*.py` |
-| Pipeline src | `pipeline/python/src/amil_utils/` |
-| Templates 17.0 | `pipeline/python/src/amil_utils/templates/17.0/` |
-| Templates 18.0 | `pipeline/python/src/amil_utils/templates/18.0/` |
-| Templates 19.0 | `pipeline/python/src/amil_utils/templates/19.0/` |
-| Templates shared | `pipeline/python/src/amil_utils/templates/shared/` |
-| Auto-fix | `pipeline/python/src/amil_utils/auto_fix.py` |
-| MCP server | `pipeline/python/src/amil_utils/mcp/server.py` |
-| Renderer context | `pipeline/python/src/amil_utils/renderer_context.py` |
+| Orchestrator src | `python/src/amil_utils/orchestrator/` |
+| Orchestrator tests | `python/tests/orchestrator/` |
+| Pipeline src | `python/src/amil_utils/` |
+| Pipeline tests | `python/tests/` |
+| Commands | `commands/amil/` |
+| Workflows | `amil/workflows/` |
+| Hooks | `hooks/amil-*.py` |
+| Knowledge base | `amil/knowledge/` |
+| Templates (Jinja2) | `python/src/amil_utils/templates/` |
+| Templates (doc) | `amil/templates/` |
+| Auto-fix | `python/src/amil_utils/auto_fix.py` |
+| MCP server | `python/src/amil_utils/mcp/server.py` |
 
-### Current State (factory-upgrades branch)
-Amil rebrand + Python unification complete. All commands use `/amil:` prefix (46 total).
-- Odoo 19.0 upgrade + Amil rebrand applied
-- CJS orchestrator fully ported to Python (~8,000 lines, 500+ tests)
-- Pipeline is pure library — no user-facing commands
+### Module Lifecycle
+```
+planned -> spec_approved -> generated -> checked -> shipped
+```
+Modules progress sequentially. Only one module generates at a time.
+
+### Pipeline Agents
+| Agent | Role |
+|-------|------|
+| `amil-scaffold` | Initial module structure |
+| `amil-model-gen` | Python model classes |
+| `amil-view-gen` | XML views |
+| `amil-security-gen` | ACLs, record rules |
+| `amil-test-gen` | Test cases |
+| `amil-logic-writer` | Business logic |
+| `amil-validator` | pylint-odoo + Docker validation |
+| `amil-search` | ChromaDB semantic search |
+| `amil-extend` | Fork-and-extend modules |
 
 ### Odoo Patterns
 - `self.env._()` not standalone `_()` in model methods (W8161)
 - Manifest load order: security → data → wizard views → model views → dashboard → menu
 - Chatter uses `{% if chatter %}` flag, not `'mail' in depends`
 - Python 3.12 (works across Odoo 17.0-19.0)
+
+### Rules
+1. **Sequential generation only** — one module at a time through the belt
+2. **All state changes through CLI subcommands** — never edit STATE.md manually
+3. **Atomic writes for JSON state** — write complete files, never partial updates
+4. **Immutable data patterns** — create new objects, never mutate existing
+5. **Python-first** — all logic in `amil_utils.orchestrator`
+6. **Zero Node.js runtime dependency** — Python 3.12 only
+7. **80%+ test coverage** — enforced across all components
+8. **Pipeline is a pure library** — no user-facing commands
+
+### Development
+```bash
+cd python
+uv run pytest tests/ -q                    # Full suite (~2,900 tests)
+uv run pytest tests/orchestrator/ -q       # Orchestrator only (~500 tests)
+uv run pytest tests/ -m "not docker" -q    # Skip Docker tests
+```
