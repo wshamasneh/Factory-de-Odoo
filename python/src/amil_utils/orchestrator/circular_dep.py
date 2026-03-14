@@ -1,6 +1,6 @@
 """Circular Dependency Breaker — Resolves circular module dependencies.
 
-Ported from orchestrator/amil/bin/lib/circular-dep-breaker.cjs (120 lines).
+Ported from orchestrator/amil/bin/lib/circular-dep-breaker.cjs (120 lines, since deleted).
 
 Strategy: When modules A and B circularly reference each other:
 1. Identify which direction is "primary" (the Many2one / FK owner side)

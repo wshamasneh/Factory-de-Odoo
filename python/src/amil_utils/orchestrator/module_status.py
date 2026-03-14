@@ -1,6 +1,6 @@
 """Module Status — Lifecycle state machine for Odoo module tracking.
 
-Ported from orchestrator/amil/bin/lib/module-status.cjs (206 lines).
+Ported from orchestrator/amil/bin/lib/module-status.cjs (206 lines, since deleted).
 Manages module lifecycle: planned -> spec_approved -> generated -> checked -> shipped.
 """
 from __future__ import annotations

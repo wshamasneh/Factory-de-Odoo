@@ -1,6 +1,6 @@
 """Config — Planning config CRUD operations.
 
-Ported from orchestrator/amil/bin/lib/config.cjs (246 lines).
+Ported from orchestrator/amil/bin/lib/config.cjs (246 lines, since deleted).
 Provides config_ensure_section, config_set, config_get, and Odoo-key validation.
 """
 from __future__ import annotations

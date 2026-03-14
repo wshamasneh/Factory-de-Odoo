@@ -1,6 +1,6 @@
 """State — STATE.md operations and progression engine.
 
-Ported from orchestrator/amil/bin/lib/state.cjs (691 lines).
+Ported from orchestrator/amil/bin/lib/state.cjs (691 lines, since deleted).
 Manages STATE.md: field extraction, replacement, plan advancement,
 decisions, blockers, session tracking, metrics, frontmatter sync.
 """

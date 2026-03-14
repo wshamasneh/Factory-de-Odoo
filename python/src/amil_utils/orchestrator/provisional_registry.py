@@ -1,6 +1,6 @@
 """Provisional Registry — Tracks "promised" models from ungenerated modules.
 
-Ported from orchestrator/amil/bin/lib/provisional-registry.cjs (361 lines).
+Ported from orchestrator/amil/bin/lib/provisional-registry.cjs (361 lines, since deleted).
 
 Solves the forward reference problem at 90+ modules: Module 15 can reference
 module 60's model because the provisional registry knows module 60 WILL

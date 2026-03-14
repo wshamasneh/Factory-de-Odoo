@@ -1,6 +1,6 @@
 """Commands — Standalone utility commands.
 
-Ported from orchestrator/amil/bin/lib/commands.cjs (548 lines).
+Ported from orchestrator/amil/bin/lib/commands.cjs (548 lines, since deleted).
 """
 from __future__ import annotations
 

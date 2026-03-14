@@ -1,6 +1,6 @@
 """Frontmatter — YAML frontmatter parsing, serialization, and CRUD.
 
-Ported from orchestrator/amil/bin/lib/frontmatter.cjs (299 lines).
+Ported from orchestrator/amil/bin/lib/frontmatter.cjs (299 lines, since deleted).
 Also provides compiled patterns for STATE.md field extraction (shared with state.py).
 """
 from __future__ import annotations

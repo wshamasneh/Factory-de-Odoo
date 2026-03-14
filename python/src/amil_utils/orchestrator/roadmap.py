@@ -1,6 +1,6 @@
 """Roadmap — Roadmap parsing and update operations.
 
-Ported from orchestrator/amil/bin/lib/roadmap.cjs (299 lines).
+Ported from orchestrator/amil/bin/lib/roadmap.cjs (299 lines, since deleted).
 Provides roadmap_get_phase, roadmap_analyze, and roadmap_update_plan_progress.
 """
 from __future__ import annotations

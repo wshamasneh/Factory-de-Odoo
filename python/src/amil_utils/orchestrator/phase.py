@@ -1,6 +1,6 @@
 """Phase — Phase CRUD and lifecycle operations.
 
-Ported from orchestrator/amil/bin/lib/phase.cjs (711 lines)
+Ported from orchestrator/amil/bin/lib/phase.cjs (711 lines, since deleted).
 and orchestrator/amil/bin/lib/phase-complete.cjs (206 lines).
 
 Query operations (phases_list, phase_find, phase_plan_index, phase_next_decimal)

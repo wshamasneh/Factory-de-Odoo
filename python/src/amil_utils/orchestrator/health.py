@@ -1,6 +1,6 @@
 """Health — Planning directory health validation and repair.
 
-Ported from orchestrator/amil/bin/lib/health.cjs (308 lines).
+Ported from orchestrator/amil/bin/lib/health.cjs (308 lines, since deleted).
 Validates .planning/ directory structure and optionally repairs issues.
 """
 from __future__ import annotations

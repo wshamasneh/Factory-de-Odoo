@@ -1,6 +1,6 @@
 """Coherence — Structural validation checks for spec.json consistency.
 
-Ported from orchestrator/amil/bin/lib/coherence.cjs (290 lines).
+Ported from orchestrator/amil/bin/lib/coherence.cjs (290 lines, since deleted).
 4 checks: many2one_targets, duplicate_models, computed_depends, security_groups.
 Each returns: {check, status, violations}
 run_all_checks aggregates: {status, checks}

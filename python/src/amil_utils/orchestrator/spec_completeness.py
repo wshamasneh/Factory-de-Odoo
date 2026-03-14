@@ -1,6 +1,6 @@
 """Spec Completeness — Scores how well-specified a module is (0-100).
 
-Ported from orchestrator/amil/bin/lib/spec-completeness.cjs (225 lines).
+Ported from orchestrator/amil/bin/lib/spec-completeness.cjs (225 lines, since deleted).
 
 Scoring drives automated triage:
 - Score >= 70: ready for spec generation (no discussion needed)

@@ -1,6 +1,6 @@
 """Decomposition — Merge agent outputs into a unified module decomposition.
 
-Ported from orchestrator/amil/bin/lib/decomposition.cjs (255 lines).
+Ported from orchestrator/amil/bin/lib/decomposition.cjs (255 lines, since deleted).
 Provides:
 - merge_decomposition: 5-step merge of agent JSON files
 - format_decomposition_table: Structured text presentation

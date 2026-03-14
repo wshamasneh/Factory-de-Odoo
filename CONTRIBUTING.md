@@ -43,7 +43,7 @@ uv run amil-utils --version
 
 # Run tests
 uv run pytest tests/ -v
-# → 444 passed
+# → ~2,900 passed
 ```
 
 ### Environment Variables
@@ -51,7 +51,7 @@ uv run pytest tests/ -v
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | `GITHUB_TOKEN` | For search features | GitHub API access for OCA repository search |
-| `ODOO_VERSION` | No | Override default Odoo version (17.0) |
+| `ODOO_VERSION` | No | Override default Odoo version (19.0) |
 
 ### Docker Setup
 
@@ -61,8 +61,8 @@ Docker is required for module validation tests:
 # Verify Docker is available
 docker compose version
 
-# The project includes a Docker Compose file for Odoo 17 + PostgreSQL 16
-cat docker/docker-compose.yml
+# The project includes a Docker Compose file for Odoo 19 + PostgreSQL 16
+cat docker/dev/docker-compose.yml
 ```
 
 ## Project Architecture

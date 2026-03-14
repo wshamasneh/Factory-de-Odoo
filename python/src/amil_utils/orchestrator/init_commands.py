@@ -1,6 +1,6 @@
 """Init Commands — Compound init commands for workflow bootstrapping.
 
-Ported from orchestrator/amil/bin/lib/init.cjs (702 lines).
+Ported from orchestrator/amil/bin/lib/init.cjs (702 lines, since deleted).
 Each function gathers context (config, models, file existence, phase state)
 into a single dict that a workflow can consume.
 """

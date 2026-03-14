@@ -1,6 +1,6 @@
 """Milestone — Milestone and requirements lifecycle operations.
 
-Ported from orchestrator/amil/bin/lib/milestone.cjs (242 lines).
+Ported from orchestrator/amil/bin/lib/milestone.cjs (242 lines, since deleted).
 """
 from __future__ import annotations
 

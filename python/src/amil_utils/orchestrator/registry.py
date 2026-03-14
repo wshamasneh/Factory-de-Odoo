@@ -1,7 +1,7 @@
 """Registry — Model registry CRUD with atomic writes, versioning, rollback,
 validation, and stats for Odoo module cross-reference tracking.
 
-Ported from orchestrator/amil/bin/lib/registry.cjs (480 lines).
+Ported from orchestrator/amil/bin/lib/registry.cjs (480 lines, since deleted).
 The model registry is the central source of truth for all Odoo models
 across modules.
 """

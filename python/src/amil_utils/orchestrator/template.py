@@ -1,6 +1,6 @@
 """Template — Template selection and fill operations.
 
-Ported from orchestrator/amil/bin/lib/template.cjs (223 lines).
+Ported from orchestrator/amil/bin/lib/template.cjs (223 lines, since deleted).
 Provides template_select (heuristic complexity classification) and template_fill
 (generates summary/plan/verification documents from templates).
 """

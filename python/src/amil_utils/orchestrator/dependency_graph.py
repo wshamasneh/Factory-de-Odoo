@@ -1,6 +1,6 @@
 """Dependency Graph — Topological sort, cycle detection, tier grouping, generation blocking.
 
-Ported from orchestrator/amil/bin/lib/dependency-graph.cjs (202 lines).
+Ported from orchestrator/amil/bin/lib/dependency-graph.cjs (202 lines, since deleted).
 Reads module dependency data from module_status.json and provides:
 - Topological ordering for generation sequence
 - Circular dependency detection with cycle path reporting

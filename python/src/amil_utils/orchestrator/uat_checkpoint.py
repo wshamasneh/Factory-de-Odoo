@@ -1,6 +1,6 @@
 """UAT Checkpoint Manager — Tracks verification checkpoints and checklists.
 
-Ported from orchestrator/amil/bin/lib/uat-checkpoint.cjs (168 lines).
+Ported from orchestrator/amil/bin/lib/uat-checkpoint.cjs (168 lines, since deleted).
 """
 from __future__ import annotations
 

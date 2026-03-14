@@ -1,6 +1,6 @@
 """Cycle Log — Append-only markdown log tracking every action in an ERP generation cycle.
 
-Ported from orchestrator/amil/bin/lib/cycle-log.cjs (157 lines).
+Ported from orchestrator/amil/bin/lib/cycle-log.cjs (157 lines, since deleted).
 Each entry is timestamped and includes module name, action, result, and error details.
 The compact summary header at the top is rewritten after each iteration so Claude can
 resume from the header alone without reading the full log.
