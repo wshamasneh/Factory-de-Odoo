@@ -19,7 +19,7 @@ from amil_utils.orchestrator.cli import orch_group
 # ─── Helpers ───────────────────────────────────────────────────────
 
 _NODE = shutil.which("node")
-_REPO_ROOT = Path(__file__).resolve().parents[4]  # pipeline/python/tests/orch -> repo root
+_REPO_ROOT = Path(__file__).resolve().parents[3]  # python/tests/orchestrator/ -> repo root
 _CJS_PATH = _REPO_ROOT / "orchestrator" / "amil" / "bin" / "amil-tools.cjs"
 
 _SKIP = not (_NODE and _CJS_PATH.exists())
