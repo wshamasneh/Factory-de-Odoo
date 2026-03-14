@@ -23,7 +23,7 @@ After the Python-first unification (CJS → Python), the directory structure no 
 | Repo layout | Mirror `~/.claude/` install layout | What you see in repo = what you get after install. No translation layer. |
 | Python package location | `python/` at repo root | Honest name, 1 level of nesting, clear separation from Claude Code artifacts |
 | Agent organization | All 28 in single `agents/` directory | No more split across orchestrator/pipeline — one flat directory |
-| Knowledge files | Promoted to root `knowledge/` | Agents reference them; must be installed alongside agents |
+| Knowledge files | Under `amil/knowledge/` (not root) | Agents reference `@~/.claude/amil/knowledge/`; keeping under `amil/` preserves all 40+ existing path references |
 
 ## Target Directory Structure
 
@@ -103,6 +103,21 @@ Factory-de-Odoo/
 │   │   ├── validate-phase.md
 │   │   ├── verify-phase.md
 │   │   └── verify-work.md
+│   ├── knowledge/               # 13 Odoo knowledge files (12 + custom/README.md)
+│   │   ├── MASTER.md
+│   │   ├── actions.md
+│   │   ├── controllers.md
+│   │   ├── custom/
+│   │   │   └── README.md
+│   │   ├── data.md
+│   │   ├── i18n.md
+│   │   ├── inheritance.md
+│   │   ├── manifest.md
+│   │   ├── models.md
+│   │   ├── security.md
+│   │   ├── testing.md
+│   │   ├── views.md
+│   │   └── wizards.md
 │   ├── references/              # 14 reference documents
 │   │   ├── checkpoints.md
 │   │   ├── continuation-format.md
@@ -154,22 +169,6 @@ Factory-de-Odoo/
 │   ├── amil-context-monitor.py
 │   └── amil-statusline.py
 │
-├── knowledge/                   # 12 Odoo knowledge files → ~/.claude/knowledge/
-│   ├── MASTER.md
-│   ├── actions.md
-│   ├── controllers.md
-│   ├── custom/
-│   │   └── README.md
-│   ├── data.md
-│   ├── i18n.md
-│   ├── inheritance.md
-│   ├── manifest.md
-│   ├── models.md
-│   ├── security.md
-│   ├── testing.md
-│   ├── views.md
-│   └── wizards.md
-│
 ├── python/                      # Python package (pip install, NOT ~/.claude/)
 │   ├── src/amil_utils/          # All source code
 │   │   ├── __init__.py
@@ -220,11 +219,19 @@ Factory-de-Odoo/
 ├── assets/                      # Branding
 │   └── factory-logo.svg
 │
+├── docs/                        # Project documentation
+│   ├── USER-GUIDE.md
+│   ├── context-monitor.md
+│   └── superpowers/specs/       # Design specs
+│
 ├── .github/                     # GitHub config
+│   ├── CODEOWNERS
 │   ├── FUNDING.yml
 │   ├── ISSUE_TEMPLATE/
 │   ├── pull_request_template.md
 │   └── workflows/
+│       ├── test.yml             # CI (paths need updating)
+│       └── auto-label-issues.yml
 │
 ├── install.py                   # Unified installer
 ├── CLAUDE.md                    # Merged project instructions
@@ -245,12 +252,15 @@ Factory-de-Odoo/
 ```python
 INSTALL_DIRS = {
     "agents": "agents",           # All 28 agents
-    "amil": "amil",               # workflows, references, document templates
+    "amil": "amil",               # workflows, references, templates, AND knowledge
     "commands": "commands",       # commands/amil/ (46 commands)
     "hooks": "hooks",             # 3 hooks
-    "knowledge": "knowledge",     # 12 knowledge files + custom/
 }
 ```
+
+Note: `knowledge/` is now inside `amil/`, so the single `"amil": "amil"` entry installs
+workflows, references, document templates, AND knowledge files together. This preserves
+all 40+ `@~/.claude/amil/knowledge/` path references in agent files with zero rewrites.
 
 ### Updated Python Package Path
 
@@ -265,14 +275,27 @@ PIPELINE_PYTHON = SOURCE_ROOT / "python"
 |------|--------|
 | `pipeline/.continue-here.md` | Stale state (Phase 4, 2026-03-01) — superseded by STATE.md |
 | `pipeline/python/uni_fee/` | Misplaced sample diagrams (2 files, 24 lines) |
-| `docs/` (root, empty) | Zero files |
 | `pipeline/bin/amil-utils` | Bash wrapper — unnecessary with pip install |
+| `pipeline/VERSION` | Contains `0.1.0` — superseded by `pyproject.toml` version field |
 | `orchestrator/install.py` | Replaced by updated root install.py |
 | `pipeline/install.sh` | Replaced by updated root install.py |
 | `orchestrator/README.md` | Merged into root README.md |
 | `pipeline/README.md` | Merged into root README.md |
 | `orchestrator/CLAUDE.md` | Merged into root CLAUDE.md |
 | `pipeline/CLAUDE.md` | Merged into root CLAUDE.md |
+| `orchestrator/.gitignore` | Legacy CJS/Node patterns — merged into root .gitignore |
+| `pipeline/.gitignore` | Pipeline-specific patterns — merged into root .gitignore |
+
+## Additional Moves Not Listed in Main Migration
+
+| Current Path | New Path | Reason |
+|---|---|---|
+| `pipeline/knowledge/*` | `amil/knowledge/*` | Knowledge stays under amil/ namespace |
+| `pipeline/defaults.json` | `python/src/amil_utils/data/defaults.json` | Package data, used by Python code |
+| `pipeline/.mcp.json` | `.mcp.json` (root) | MCP server config, project-level |
+| `orchestrator/docs/context-monitor.md` | `docs/context-monitor.md` | Real documentation file |
+| `orchestrator/docs/USER-GUIDE.md` | `docs/USER-GUIDE.md` | Real documentation file |
+| `pipeline/CONTRIBUTING.md` | `CONTRIBUTING.md` (root) | Project-level doc |
 
 ## Renames
 
@@ -289,18 +312,46 @@ These files need internal path references updated after the move:
 
 | File | Changes Needed |
 |------|----------------|
-| `install.py` | Update `INSTALL_DIRS`, `PIPELINE_PYTHON` path, `SOURCE_ROOT` logic |
+| `install.py` | Update `INSTALL_DIRS`, `PIPELINE_PYTHON` path, `SOURCE_ROOT` logic, error messages (`pip install -e python`) |
 | `CLAUDE.md` | Merge 3 CLAUDE.md files, update all path references |
-| `README.md` | Update architecture tree, install paths, test paths |
+| `README.md` | Update architecture tree, install paths, test paths, logo path |
 | `CONTRIBUTING.md` | Update development setup paths |
-| `python/pyproject.toml` | Verify `packages` and `force-include` paths |
-| `.gitignore` | Update if any patterns referenced old paths |
-| All 28 agent files | Grep for `pipeline/`, `orchestrator/` path references |
-| All 46 command files | Same |
+| `python/pyproject.toml` | Verified: relative paths (`packages`, `testpaths`, `source`) unchanged — internal layout preserved. No changes needed. |
+| `.gitignore` | Three-way merge: root + `orchestrator/.gitignore` + `pipeline/.gitignore`. Drop legacy CJS patterns, keep Python/Docker patterns, update paths. |
+| All 28 agent files | Grep for `pipeline/`, `orchestrator/` path references (NOTE: `@~/.claude/amil/knowledge/` references are UNCHANGED) |
+| All 46 command files | Grep for `pipeline/`, `orchestrator/` path references |
 | All 41 workflow files | Same |
 | `hooks/*.py` | Check for hardcoded paths |
-| `.mcp.json` | Update Python module path if needed |
-| `scripts/odoo-dev.sh` | Update relative paths |
+| `.mcp.json` | Verify `python3 -m amil_utils.mcp.server` still resolves (module path, not filesystem — should work) |
+| `scripts/odoo-dev.sh` | Update relative paths (docker-compose location) |
+| `.github/workflows/*.yml` | Update test paths (e.g., `pipeline/python/` → `python/`) |
+
+## .planning/ Directories
+
+Three `.planning/` directories exist:
+- `orchestrator/.planning/` — Factory-de-Odoo's own project state (STATE.md, ROADMAP.md, etc.)
+- `pipeline/.planning/` — Pipeline milestone planning
+- `pipeline/python/.planning/` — Python sub-project planning
+
+These are **per-project ephemeral state** generated by the Amil workflow. They are NOT part of the restructure — they are gitignored artifacts that will be regenerated. The root `.planning/` directory (if present) is the canonical location for the Factory-de-Odoo project's own state.
+
+## Verification Checklist
+
+After all moves are complete, verify:
+
+1. `cd python && uv venv --python 3.12 && uv pip install -e ".[dev]"` — package installs
+2. `amil-utils --help` — CLI resolves
+3. `amil-utils orch --help` — orchestrator subcommands resolve
+4. `cd python && uv run pytest tests/ -m "not docker" -q` — all tests pass
+5. `python install.py` — installs all dirs to `~/.claude/` (agents, amil, commands, hooks)
+6. Verify `~/.claude/agents/` contains all 28 `amil-*.md` files
+7. Verify `~/.claude/amil/knowledge/` contains all 13 knowledge files
+8. Grep for `pipeline/` and `orchestrator/` across entire repo — zero remaining references
+9. `CONVENTIONS.md` exists at root
+
+## Rollback Plan
+
+All changes are on the `factory-upgrades` branch. Rollback: `git reset --hard <pre-restructure-commit>`. No other branches or projects are affected.
 
 ## CONVENTIONS.md Content
 
@@ -346,7 +397,7 @@ The merged CLAUDE.md combines content from all three existing files:
    - Commands: `commands/amil/`
    - Workflows: `amil/workflows/`
    - Hooks: `hooks/`
-   - Knowledge: `knowledge/`
+   - Knowledge: `amil/knowledge/`
    - Python src: `python/src/amil_utils/`
    - Orchestrator src: `python/src/amil_utils/orchestrator/`
    - Tests: `python/tests/`
@@ -363,10 +414,11 @@ The merged CLAUDE.md combines content from all three existing files:
 
 | Metric | Count |
 |--------|-------|
-| Files moved | ~171 |
+| Files moved | ~180 |
 | Files renamed | 4 |
-| Files deleted | ~12 |
-| Files needing content updates | ~10 core + grep across ~115 markdown files |
+| Files deleted | ~14 |
+| Files needing content updates | ~12 core + grep across ~115 markdown files |
 | New files created | 1 (CONVENTIONS.md) |
 | Directories eliminated | 2 (`orchestrator/`, `pipeline/`) |
 | Total agents after restructure | 28 (all in one directory, all installed) |
+| Knowledge files installed | 13 (12 knowledge + custom/README.md) — via `amil/knowledge/` |
